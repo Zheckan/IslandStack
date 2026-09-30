@@ -60,3 +60,18 @@ public enum SystemProcess {
     return output
   }
 }
+
+struct ProcessRunner {
+  let execute: (String, [String], Int) throws -> String
+
+  static var live: ProcessRunner {
+    ProcessRunner { executable, arguments, timeout in
+      try SystemProcess.run(executable, arguments: arguments, timeout: timeout)
+    }
+  }
+
+  @discardableResult
+  func run(_ executable: String, arguments: [String], timeout: Int) throws -> String {
+    try execute(executable, arguments, timeout)
+  }
+}

@@ -60,15 +60,21 @@ public final class IslandStackHost {
   public let udid: String
   private let cache: URL
   private let xcodeVersion: String
+  private let process: ProcessRunner
 
-  public init(root: URL, udid: String) throws {
+  public convenience init(root: URL, udid: String) throws {
+    try self.init(root: root, udid: udid, process: .live)
+  }
+
+  init(root: URL, udid: String, process: ProcessRunner) throws {
+    self.process = process
     self.root = root
     self.udid = udid
     self.cache = root.appendingPathComponent(".build/islandstack-xcode")
     guard FileManager.default.fileExists(atPath: root.appendingPathComponent("ios/Competitor.xcodeproj").path),
           FileManager.default.fileExists(atPath: root.appendingPathComponent("ios/ShortcutDriver.xcodeproj").path)
     else { throw HostError.missingProject }
-    xcodeVersion = try SystemProcess.run("/usr/bin/xcodebuild", arguments: ["-version"], timeout: 20)
+    xcodeVersion = try process.run("/usr/bin/xcodebuild", arguments: ["-version"], timeout: 20)
   }
 
   public static func findRoot(startingAt start: URL) throws -> URL {
@@ -88,7 +94,7 @@ public final class IslandStackHost {
     guard (1...2).contains(competitors) else { throw HostError.invalidCompetitorCount }
     try validateReturnApp(bundleID)
     return try withReturn(to: bundleID) {
-      if competitors == 1, SimulatorControl.isInstalled(Competitor.b.bundleID, on: udid) {
+      if competitors == 1, try SimulatorControl.isInstalled(Competitor.b.bundleID, on: udid, process: process) {
         let stopped = try run(.stop, for: .b)
         guard stopped.count == 0 else { throw HostError.unexpectedCount(.b, .stop, stopped.count) }
       }
@@ -118,7 +124,7 @@ public final class IslandStackHost {
     try validateReturnApp(bundleID)
     return try withReturn(to: bundleID) {
       try Competitor.allCases.map { competitor in
-        guard SimulatorControl.isInstalled(competitor.bundleID, on: udid) else {
+        guard try SimulatorControl.isInstalled(competitor.bundleID, on: udid, process: process) else {
           return CompetitorState(competitor: competitor, installed: false, count: nil)
         }
         let receipt = try run(.status, for: competitor)
@@ -133,11 +139,11 @@ public final class IslandStackHost {
       var states: [CompetitorState] = []
       var failures: [String] = []
       for competitor in Competitor.allCases {
-        guard SimulatorControl.isInstalled(competitor.bundleID, on: udid) else {
-          states.append(CompetitorState(competitor: competitor, installed: false, count: nil))
-          continue
-        }
         do {
+          guard try SimulatorControl.isInstalled(competitor.bundleID, on: udid, process: process) else {
+            states.append(CompetitorState(competitor: competitor, installed: false, count: nil))
+            continue
+          }
           let receipt = try run(.stop, for: competitor)
           guard receipt.count == 0 else {
             throw HostError.unexpectedCount(competitor, .stop, receipt.count)
@@ -158,7 +164,7 @@ public final class IslandStackHost {
   }
 
   private func validateReturnApp(_ bundleID: String) throws {
-    guard SimulatorControl.isInstalled(bundleID, on: udid) else {
+    guard try SimulatorControl.isInstalled(bundleID, on: udid, process: process) else {
       throw HostError.targetNotInstalled(bundleID)
     }
   }
@@ -168,10 +174,10 @@ public final class IslandStackHost {
     do {
       result = try body()
     } catch {
-      try? SimulatorControl.launch(bundleID, on: udid)
+      try? SimulatorControl.launch(bundleID, on: udid, process: process)
       throw error
     }
-    try SimulatorControl.launch(bundleID, on: udid)
+    try SimulatorControl.launch(bundleID, on: udid, process: process)
     return result
   }
 
@@ -199,7 +205,7 @@ public final class IslandStackHost {
     let buildMarker = cache.appendingPathComponent("build-\(competitor.rawValue).txt")
     if (try? String(contentsOf: buildMarker, encoding: .utf8)) != fingerprint
       || !FileManager.default.fileExists(atPath: product.path) {
-      try SystemProcess.run(
+      try process.run(
         "/usr/bin/xcodebuild",
         arguments: [
           "-project", root.appendingPathComponent("ios/Competitor.xcodeproj").path,
@@ -214,21 +220,21 @@ public final class IslandStackHost {
       try fingerprint.write(to: buildMarker, atomically: true, encoding: .utf8)
     }
     let installMarker = cache.appendingPathComponent("installed-\(udid)-\(competitor.rawValue).txt")
-    if (try? String(contentsOf: installMarker, encoding: .utf8)) != fingerprint
-      || !SimulatorControl.isInstalled(competitor.bundleID, on: udid) {
-      try SimulatorControl.install(product, on: udid)
+    if try (try? String(contentsOf: installMarker, encoding: .utf8)) != fingerprint
+      || !SimulatorControl.isInstalled(competitor.bundleID, on: udid, process: process) {
+      try SimulatorControl.install(product, on: udid, process: process)
       try fingerprint.write(to: installMarker, atomically: true, encoding: .utf8)
     }
   }
 
   private func run(_ action: HelperAction, for competitor: Competitor) throws -> IntentReceipt {
-    let receiptURL = try SimulatorControl.dataContainer(for: competitor.bundleID, on: udid)
+    let receiptURL = try SimulatorControl.dataContainer(for: competitor.bundleID, on: udid, process: process)
       .appendingPathComponent("Documents/intent-last.json")
     let decoder = JSONDecoder()
     let previous = (try? Data(contentsOf: receiptURL))
       .flatMap { try? decoder.decode(IntentReceipt.self, from: $0) }?.requestID
 
-    try SystemProcess.run(
+    try process.run(
       "/usr/bin/xcodebuild",
       arguments: [
         "-project", root.appendingPathComponent("ios/ShortcutDriver.xcodeproj").path,

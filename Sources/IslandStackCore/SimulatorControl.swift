@@ -29,14 +29,29 @@ public enum SimulatorControl {
     }.sorted { ($0.name, $0.udid) < ($1.name, $1.udid) }
   }
 
-  public static func isInstalled(_ bundleID: String, on udid: String) -> Bool {
-    (try? SystemProcess.run(
-      "/usr/bin/xcrun", arguments: ["simctl", "appinfo", udid, bundleID], timeout: 20
-    )) != nil
+  public static func isInstalled(_ bundleID: String, on udid: String) throws -> Bool {
+    try isInstalled(bundleID, on: udid, process: .live)
+  }
+
+  static func isInstalled(_ bundleID: String, on udid: String, process: ProcessRunner) throws -> Bool {
+    let output = try process.run(
+      "/usr/bin/xcrun", arguments: ["simctl", "listapps", udid], timeout: 20
+    )
+    let list = try PropertyListSerialization.propertyList(
+      from: Data(output.utf8), options: [], format: nil
+    )
+    guard let apps = list as? [String: Any] else {
+      throw CocoaError(.propertyListReadCorrupt)
+    }
+    return apps[bundleID] != nil
   }
 
   public static func dataContainer(for bundleID: String, on udid: String) throws -> URL {
-    let output = try SystemProcess.run(
+    try dataContainer(for: bundleID, on: udid, process: .live)
+  }
+
+  static func dataContainer(for bundleID: String, on udid: String, process: ProcessRunner) throws -> URL {
+    let output = try process.run(
       "/usr/bin/xcrun",
       arguments: ["simctl", "get_app_container", udid, bundleID, "data"],
       timeout: 20
@@ -45,13 +60,21 @@ public enum SimulatorControl {
   }
 
   public static func install(_ app: URL, on udid: String) throws {
-    try SystemProcess.run(
+    try install(app, on: udid, process: .live)
+  }
+
+  static func install(_ app: URL, on udid: String, process: ProcessRunner) throws {
+    try process.run(
       "/usr/bin/xcrun", arguments: ["simctl", "install", udid, app.path], timeout: 90
     )
   }
 
   public static func launch(_ bundleID: String, on udid: String) throws {
-    try SystemProcess.run(
+    try launch(bundleID, on: udid, process: .live)
+  }
+
+  static func launch(_ bundleID: String, on udid: String, process: ProcessRunner) throws {
+    try process.run(
       "/usr/bin/xcrun", arguments: ["simctl", "launch", udid, bundleID], timeout: 30
     )
   }
