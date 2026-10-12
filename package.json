@@ -1,0 +1,22 @@
+{
+  "name": "islandstack",
+  "version": "0.1.0",
+  "description": "Start competing Live Activities on an iPhone Simulator",
+  "license": "MIT",
+  "repository": "github:Zheckan/IslandStack",
+  "os": ["darwin"],
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "islandstack": "bin/islandstack.js"
+  },
+  "files": [
+    "Package.swift",
+    "Sources/",
+    "Tests/",
+    "docs/",
+    "ios/",
+    "bin/"
+  ]
+}

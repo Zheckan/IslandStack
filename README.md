@@ -2,7 +2,7 @@
 
 IslandStack starts one or two dummy Live Activities on a running iPhone Simulator. Use it while testing how your app's activity shares the Dynamic Island with activities from other apps. Each dummy activity belongs to a separate IslandStack helper app.
 
-The CLI builds and installs the helpers from this checkout. It opens Apple's Shortcuts app to run their built-in App Shortcuts, then returns to the app you name. You do not need to open either helper app or create a saved shortcut.
+The CLI builds and installs the helpers from its bundled sources. It opens Apple's Shortcuts app to run their built-in App Shortcuts, then returns to the app you name. You do not need to open either helper app or create a saved shortcut.
 
 ## Requirements
 
@@ -10,9 +10,22 @@ The CLI builds and installs the helpers from this checkout. It opens Apple's Sho
 - A booted iPhone Simulator with Dynamic Island support.
 - Your test app installed on that Simulator. Start its Live Activity in the app before running IslandStack if you want the comparison case.
 
-This source-checkout tool builds unsigned Simulator apps locally. It does not need an Apple Developer account, APNs, Expo, or Metro. Physical devices and other Xcode/iOS versions have not been tested.
+IslandStack builds unsigned Simulator apps locally. The source checkout needs Swift; the npm launcher also needs Node.js and npm. It does not need an Apple Developer account, APNs, Expo, or Metro. Physical devices and other Xcode/iOS versions have not been tested.
 
-## Run a comparison
+## Run with npx
+
+After the npm package is published, run IslandStack from any directory without installing a global command:
+
+```sh
+npx islandstack doctor
+npx islandstack start --competitors 2 --device <simulator-udid> --return-to <your-app-bundle-id>
+npx islandstack status --device <simulator-udid> --return-to <your-app-bundle-id>
+npx islandstack stop --device <simulator-udid> --return-to <your-app-bundle-id>
+```
+
+The first invocation downloads the package and builds the Swift CLI. npm may reuse the package and build on later invocations. The helper apps remain installed on the Simulator until you remove them; use `stop` to end their activities.
+
+## Run from a source checkout
 
 From this repository:
 
@@ -40,6 +53,8 @@ swift test
 ```
 
 The [execution plan](docs/execution-plan.md) records the stack, tested paths, and release work that remains. The host code is in `Sources/`, the two native helper builds are in `ios/Competitor.xcodeproj`, and the Shortcuts UI driver is in `ios/ShortcutDriver.xcodeproj`.
+
+The npm package contains these sources and a small Node launcher. To inspect what a release would ship, run `npm pack --dry-run`. Publishing to npm is a separate release step.
 
 ## License
 
