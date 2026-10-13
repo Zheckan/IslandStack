@@ -22,6 +22,8 @@ npx islandstack
 
 Choose a booted iPhone Simulator and how many helper apps to install: **1, 2, or 3**. The command installs A, A/B, or A/B/C. It leaves existing helper apps and activities alone. Open the installed apps and tap their full-page **Activate Live Activity** buttons. Each identity keeps one activity; tap **Stop Live Activity** to end it.
 
+Use **↑/↓** to move between menu options and **Enter** to select. **Esc** or **Ctrl+C** cancels. Piped input and terminals with `TERM=dumb` use numbered choices instead.
+
 To install without prompts:
 
 ```sh
@@ -65,6 +67,15 @@ The dummy widgets show a 20-minute countdown. That display deadline does not aut
 ```sh
 swift test
 ```
+
+To check arrow selection, cancellation, terminal restoration, and piped numeric input through the CLI:
+
+```sh
+swift build
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s Tests/CLI -v
+```
+
+These terminal tests require a booted eligible iPhone Simulator; the Simulator picker test requires two. They exit before installation and leave the Simulators unchanged.
 
 The [execution plan](docs/execution-plan.md) records the stack, tested paths, and release work that remains. The host code is in `Sources/`, the three native helper builds are in `ios/Competitor.xcodeproj`, and the Shortcuts UI driver is in `ios/ShortcutDriver.xcodeproj`.
 

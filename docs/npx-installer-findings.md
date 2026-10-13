@@ -6,6 +6,8 @@ Date: 13 October 2026. This extends the original two-helper CLI with a third ide
 
 After npm publication, `npx islandstack` builds the Swift launcher, lists eligible booted iPhone Simulators when there is more than one, and asks whether to install one, two, or three helper apps. With one eligible device, it selects that device automatically. With no eligible devices, it reports an error. The picker uses the existing iOS 17-or-newer iPhone eligibility check; it does not detect Dynamic Island hardware. Choose a Simulator with Dynamic Island to test Island presentation.
 
+Both menus support up/down arrow keys and Enter in an interactive terminal. Selection wraps at the ends of the list. Esc and Ctrl+C cancel with exit code 130 and restore terminal settings and cursor visibility. Piped input, redirected output, and `TERM=dumb` retain numeric input. No terminal UI dependency is installed.
+
 The selected count installs A, A/B, or A/B/C. Every helper has a separate app and widget bundle identity. Installation leaves previously installed helpers and their activities alone. Each app is one full-page button, labeled **Activate Live Activity** while stopped and **Stop Live Activity** while active. Each helper deliberately maintains one activity. This is the tool's contract, not an ActivityKit limit of one activity per app.
 
 For automation, use `install --competitors 3 --device <udid>` without prompts. Existing `start`, `status`, and `stop` commands still use built-in App Shortcuts and restore `--return-to`. Starting a smaller count stops the unused helpers; stopping visits all three independently. Active counts do not guarantee the same number of visible Island items.
@@ -23,6 +25,8 @@ The generated image was resized to 1024 × 1024 for the asset catalog. Source fi
 ## Verification
 
 - `swift test`: 12 tests passed. The new three-competitor regression failed before implementation because the host accepted only one or two. It now verifies three starts, reduction to one, and cleanup to zero. Other new tests verify installation does not start activities and invalid counts do not install apps.
+- Four pseudo-terminal/pipe CLI tests passed, covering second-Simulator selection, count selection with both arrow directions and wraparound, Esc/Ctrl+C cancellation, terminal restoration, and invalid numeric input. The count-selection test failed before implementation because only a numeric prompt existed. These checks stop before installation.
+- The arrow menus also ran through `npx --yes --package=<archive> islandstack` in a terminal with `TERM=xterm-256color`. Down/Enter selected the second Simulator, two Down presses highlighted three helper apps, and Esc cancelled with exit code 130. A `TERM=dumb` run displayed the numeric fallback. Neither menu trial installed apps.
 - All three native app and widget variants built and installed on the existing iPhone 18 Pro Max Simulator, iOS 27.0, UDID `6B3EAAB6-3D78-4DC8-BFAB-6D3B4044C41B`.
 - On that Simulator, tapping A's full-page button changed **Activate Live Activity** to **Stop Live Activity**; tapping again restored **Activate Live Activity**.
 - A locally packed npm archive ran through `npm exec --yes --package=<archive> -- islandstack` from an unrelated caller directory. It listed both booted iPhones, rejected invalid device and count input, and installed A/B/C on the selected device. This verifies the packaged flow without claiming the package is published to npm.

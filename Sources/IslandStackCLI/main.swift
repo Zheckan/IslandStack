@@ -67,22 +67,10 @@ private func printUsage() {
     npx islandstack stop --device <udid> --return-to <target-bundle-id>
 
     Without a command, choose a booted Simulator and install 1, 2, or 3 helper apps.
+    Interactive menus use arrow keys and Enter; Esc or Ctrl+C cancels. Piped input uses numbers.
     Install prompts for missing choices; other commands need --device when multiple iPhones are booted.
     Start, status, and stop briefly open Shortcuts, then launch --return-to.
     """)
-}
-
-private func readChoice(_ prompt: String, range: ClosedRange<Int>) throws -> Int {
-  while true {
-    print(prompt)
-    guard let line = readLine() else {
-      throw CLIError.usage("Input ended. Run install with --device and --competitors to skip the prompts.")
-    }
-    if let value = Int(line.trimmingCharacters(in: .whitespacesAndNewlines)), range.contains(value) {
-      return value
-    }
-    print("Enter a number from \(range.lowerBound) to \(range.upperBound).")
-  }
 }
 
 private func printStates(_ states: [CompetitorState]) {
@@ -126,18 +114,16 @@ private struct IslandStackCLI {
           if eligible.count == 1 {
             options.udid = eligible[0].udid
           } else {
-            print("Choose a booted iPhone Simulator:")
-            for (index, device) in eligible.enumerated() {
-              print("\(index + 1). \(device.name) [\(device.runtime)]")
-            }
-            let choice = try readChoice("Simulator number:", range: 1...eligible.count)
-            options.udid = eligible[choice - 1].udid
+            let choice = try TerminalMenu.choose("Choose a booted iPhone Simulator:",
+              options: eligible.map { "\($0.name) [\($0.runtime)]" })
+            options.udid = eligible[choice].udid
           }
         }
         // Validate the selected device before asking how many apps to install.
         _ = try DeviceSelection.choose(from: devices, requestedUDID: options.udid)
         if options.competitors == nil {
-          options.competitors = try readChoice("How many helper apps? Enter 1, 2, or 3, one Live Activity per app:", range: 1...3)
+          options.competitors = try TerminalMenu.choose("How many helper apps? One Live Activity per app:",
+            options: ["1 helper app", "2 helper apps", "3 helper apps"]) + 1
         }
       }
       let selected = try DeviceSelection.choose(from: devices, requestedUDID: options.udid)
@@ -166,6 +152,9 @@ private struct IslandStackCLI {
       default: break
       }
       print("Returned to \(returnTo).")
+    } catch TerminalMenuError.cancelled {
+      fputs("islandstack: Cancelled.\n", stderr)
+      exit(130)
     } catch {
       fputs("islandstack: \(error)\n", stderr)
       exit(1)
