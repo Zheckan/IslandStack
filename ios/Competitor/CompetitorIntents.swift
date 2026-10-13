@@ -3,7 +3,9 @@ import Foundation
 
 @available(iOS 17.0, *)
 struct StartCompetitorIntent: LiveActivityIntent {
-  #if COMPETITOR_B
+  #if COMPETITOR_C
+  static let title: LocalizedStringResource = "Start IslandStack C"
+  #elseif COMPETITOR_B
   static let title: LocalizedStringResource = "Start IslandStack B"
   #else
   static let title: LocalizedStringResource = "Start IslandStack A"
@@ -22,7 +24,9 @@ struct StartCompetitorIntent: LiveActivityIntent {
 
 @available(iOS 17.0, *)
 struct StopCompetitorIntent: LiveActivityIntent {
-  #if COMPETITOR_B
+  #if COMPETITOR_C
+  static let title: LocalizedStringResource = "Stop IslandStack C"
+  #elseif COMPETITOR_B
   static let title: LocalizedStringResource = "Stop IslandStack B"
   #else
   static let title: LocalizedStringResource = "Stop IslandStack A"
@@ -41,7 +45,9 @@ struct StopCompetitorIntent: LiveActivityIntent {
 
 @available(iOS 17.0, *)
 struct StatusCompetitorIntent: AppIntent {
-  #if COMPETITOR_B
+  #if COMPETITOR_C
+  static let title: LocalizedStringResource = "Status IslandStack C"
+  #elseif COMPETITOR_B
   static let title: LocalizedStringResource = "Status IslandStack B"
   #else
   static let title: LocalizedStringResource = "Status IslandStack A"
@@ -61,7 +67,11 @@ struct StatusCompetitorIntent: AppIntent {
 @available(iOS 17.0, *)
 struct CompetitorShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
-    #if COMPETITOR_B
+    #if COMPETITOR_C
+    AppShortcut(intent: StartCompetitorIntent(), phrases: ["Start C in \(.applicationName)"], shortTitle: "Start C", systemImageName: "moon.fill")
+    AppShortcut(intent: StopCompetitorIntent(), phrases: ["Stop C in \(.applicationName)"], shortTitle: "Stop C", systemImageName: "stop.circle")
+    AppShortcut(intent: StatusCompetitorIntent(), phrases: ["Status C in \(.applicationName)"], shortTitle: "Status C", systemImageName: "info.circle")
+    #elseif COMPETITOR_B
     AppShortcut(intent: StartCompetitorIntent(), phrases: ["Start B in \(.applicationName)"], shortTitle: "Start B", systemImageName: "flame.fill")
     AppShortcut(intent: StopCompetitorIntent(), phrases: ["Stop B in \(.applicationName)"], shortTitle: "Stop B", systemImageName: "stop.circle")
     AppShortcut(intent: StatusCompetitorIntent(), phrases: ["Status B in \(.applicationName)"], shortTitle: "Status B", systemImageName: "info.circle")

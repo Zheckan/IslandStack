@@ -57,4 +57,16 @@ final class ShortcutActionsUITests: XCTestCase {
   @MainActor func testStatusB() throws {
     try runAction(appName: "IslandStack B", buttonLabel: "Info")
   }
+
+  @MainActor func testStartC() throws {
+    try runAction(appName: "IslandStack C", buttonLabel: "Do Not Disturb")
+  }
+
+  @MainActor func testStopC() throws {
+    try runAction(appName: "IslandStack C", buttonLabel: "Stop Button In A Circle")
+  }
+
+  @MainActor func testStatusC() throws {
+    try runAction(appName: "IslandStack C", buttonLabel: "Info")
+  }
 }

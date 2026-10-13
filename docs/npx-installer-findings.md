@@ -1,0 +1,32 @@
+# Interactive installer and three helper apps
+
+Date: 13 October 2026. This extends the original two-helper CLI with a third identity and an installation flow for people who want to activate activities by tapping the apps.
+
+## User flow
+
+After npm publication, `npx islandstack` builds the Swift launcher, lists eligible booted iPhone Simulators when there is more than one, and asks whether to install one, two, or three helper apps. With one eligible device, it selects that device automatically. With no eligible devices, it reports an error. The picker uses the existing iOS 17-or-newer iPhone eligibility check; it does not detect Dynamic Island hardware. Choose a Simulator with Dynamic Island to test Island presentation.
+
+The selected count installs A, A/B, or A/B/C. Every helper has a separate app and widget bundle identity. Installation leaves previously installed helpers and their activities alone. Each app is one full-page button, labeled **Activate Live Activity** while stopped and **Stop Live Activity** while active. Each helper deliberately maintains one activity. This is the tool's contract, not an ActivityKit limit of one activity per app.
+
+For automation, use `install --competitors 3 --device <udid>` without prompts. Existing `start`, `status`, and `stop` commands still use built-in App Shortcuts and restore `--return-to`. Starting a smaller count stops the unused helpers; stopping visits all three independently. Active counts do not guarantee the same number of visible Island items.
+
+## App icon
+
+The original raster artwork is in `ios/Competitor/Assets.xcassets/AppIcon.appiconset/AppIcon.png`. It is an opaque 1024 × 1024 PNG shared by the three helper app builds. Xcode's native asset catalog produces the required app icon sizes. The artwork contains no Apple logo or SF Symbols.
+
+The built-in image generation tool produced the artwork with this final prompt:
+
+> Use case: logo-brand. Asset type: production iOS app icon for IslandStack, a developer utility for testing multiple Dynamic Island Live Activities. Create one square 1024x1024 opaque app-icon image. Original minimal geometric logo: three broad floating horizontal capsule islands arranged in a short vertical stack with slight elegant offset, the three capsules colored luminous cyan, orange and violet respectively, with restrained highlights for clear dimensionality. Deep midnight navy background extending to every edge. Strong central silhouette, generous safe space, legible at small home-screen sizes. Apple-native visual polish, clean modern geometry, softly lit materials, calm restrained design. No typography, no letters, no Apple logo, no SF Symbols, no borders, no rounded outer-square mask, no phone illustration, no mockup. The square artwork itself is the deliverable, not an image of an icon.
+
+The generated image was resized to 1024 × 1024 for the asset catalog. Source fingerprinting includes the asset catalog so an icon change invalidates the cached native build.
+
+## Verification
+
+- `swift test`: 12 tests passed. The new three-competitor regression failed before implementation because the host accepted only one or two. It now verifies three starts, reduction to one, and cleanup to zero. Other new tests verify installation does not start activities and invalid counts do not install apps.
+- All three native app and widget variants built and installed on the existing iPhone 18 Pro Max Simulator, iOS 27.0, UDID `6B3EAAB6-3D78-4DC8-BFAB-6D3B4044C41B`.
+- On that Simulator, tapping A's full-page button changed **Activate Live Activity** to **Stop Live Activity**; tapping again restored **Activate Live Activity**.
+- A locally packed npm archive ran through `npm exec --yes --package=<archive> -- islandstack` from an unrelated caller directory. It listed both booted iPhones, rejected invalid device and count input, and installed A/B/C on the selected device. This verifies the packaged flow without claiming the package is published to npm.
+- From a packed archive outside the checkout, `start --competitors 3` and subsequent fresh `status` each reported A1/B1/C1 and restored Safari. The first C start timed out because its assumed symbol label was wrong. A live Shortcuts accessibility snapshot identified the actual label, **Do Not Disturb**, and the corrected driver completed the three-app start.
+- From the same packed archive, `stop` reported A0/B0/C0 and restored Safari. All IslandStack activities created in this trial were stopped; the helper apps remain installed for manual testing.
+
+The registry release remains separate. Physical devices, another Mac, and additional iOS/Xcode versions have not been verified in this change.

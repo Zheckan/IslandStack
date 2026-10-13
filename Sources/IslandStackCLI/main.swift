@@ -19,9 +19,9 @@ private struct Options {
   var competitors: Int?
 
   init(arguments: [String]) throws {
-    guard let first = arguments.first,
-          ["doctor", "start", "status", "stop", "help"].contains(first) else {
-      throw CLIError.usage("Expected doctor, start, status, or stop. Run islandstack help.")
+    let first = arguments.first ?? "install"
+    guard ["install", "doctor", "start", "status", "stop", "help"].contains(first) else {
+      throw CLIError.usage("Expected install, doctor, start, status, or stop. Run islandstack help.")
     }
     command = first
     var index = 1
@@ -35,8 +35,8 @@ private struct Options {
       case "--device": udid = value
       case "--return-to": returnTo = value
       case "--competitors":
-        guard let number = Int(value) else {
-          throw CLIError.usage("--competitors must be 1 or 2.")
+        guard let number = Int(value), (1...3).contains(number) else {
+          throw CLIError.usage("--competitors must be 1, 2, or 3.")
         }
         competitors = number
       default: throw CLIError.usage("Unknown option \(flag). Run islandstack help.")
@@ -44,13 +44,13 @@ private struct Options {
       index += 2
     }
     if command == "start", competitors == nil {
-      throw CLIError.usage("start requires --competitors 1 or 2.")
+      throw CLIError.usage("start requires --competitors 1, 2, or 3.")
     }
     if ["start", "status", "stop"].contains(command), returnTo == nil {
       throw CLIError.usage("\(command) requires --return-to with the target app's bundle ID.")
     }
-    if command != "start", competitors != nil {
-      throw CLIError.usage("--competitors is only valid with start.")
+    if !["start", "install"].contains(command), competitors != nil {
+      throw CLIError.usage("--competitors is only valid with install or start.")
     }
   }
 }
@@ -59,14 +59,30 @@ private func printUsage() {
   print("""
     IslandStack: create competing Live Activities on a booted iPhone Simulator.
 
-    swift run islandstack doctor
-    swift run islandstack start --competitors 2 --device <udid> --return-to <target-bundle-id>
-    swift run islandstack status --device <udid> --return-to <target-bundle-id>
-    swift run islandstack stop --device <udid> --return-to <target-bundle-id>
+    npx islandstack
+    npx islandstack install --competitors 3 --device <udid>
+    npx islandstack doctor
+    npx islandstack start --competitors 3 --device <udid> --return-to <target-bundle-id>
+    npx islandstack status --device <udid> --return-to <target-bundle-id>
+    npx islandstack stop --device <udid> --return-to <target-bundle-id>
 
-    Omit --device only when exactly one eligible iPhone Simulator is booted.
+    Without a command, choose a booted Simulator and install 1, 2, or 3 helper apps.
+    Install prompts for missing choices; other commands need --device when multiple iPhones are booted.
     Start, status, and stop briefly open Shortcuts, then launch --return-to.
     """)
+}
+
+private func readChoice(_ prompt: String, range: ClosedRange<Int>) throws -> Int {
+  while true {
+    print(prompt)
+    guard let line = readLine() else {
+      throw CLIError.usage("Input ended. Run install with --device and --competitors to skip the prompts.")
+    }
+    if let value = Int(line.trimmingCharacters(in: .whitespacesAndNewlines)), range.contains(value) {
+      return value
+    }
+    print("Enter a number from \(range.lowerBound) to \(range.upperBound).")
+  }
 }
 
 private func printStates(_ states: [CompetitorState]) {
@@ -83,7 +99,7 @@ private func printStates(_ states: [CompetitorState]) {
 private struct IslandStackCLI {
   static func main() {
     do {
-      let options = try Options(arguments: Array(CommandLine.arguments.dropFirst()))
+      var options = try Options(arguments: Array(CommandLine.arguments.dropFirst()))
       if options.command == "help" {
         printUsage()
         return
@@ -103,13 +119,42 @@ private struct IslandStackCLI {
         return
       }
 
+      if options.command == "install" {
+        if options.udid == nil {
+          let eligible = devices.filter(\.isEligible)
+          guard !eligible.isEmpty else { throw DeviceSelectionError.noBootedIPhone }
+          if eligible.count == 1 {
+            options.udid = eligible[0].udid
+          } else {
+            print("Choose a booted iPhone Simulator:")
+            for (index, device) in eligible.enumerated() {
+              print("\(index + 1). \(device.name) [\(device.runtime)]")
+            }
+            let choice = try readChoice("Simulator number:", range: 1...eligible.count)
+            options.udid = eligible[choice - 1].udid
+          }
+        }
+        // Validate the selected device before asking how many apps to install.
+        _ = try DeviceSelection.choose(from: devices, requestedUDID: options.udid)
+        if options.competitors == nil {
+          options.competitors = try readChoice("How many helper apps? Enter 1, 2, or 3, one Live Activity per app:", range: 1...3)
+        }
+      }
       let selected = try DeviceSelection.choose(from: devices, requestedUDID: options.udid)
       let root = try IslandStackHost.findRoot(
         startingAt: URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
       )
       let host = try IslandStackHost(root: root, udid: selected.udid)
-      let returnTo = options.returnTo!
       print("Simulator: \(selected.name) (\(selected.udid))")
+      if options.command == "install" {
+        print("Building and installing helper apps...")
+        for competitor in try host.install(competitors: options.competitors!) {
+          print("IslandStack \(competitor.rawValue): installed")
+        }
+        print("Open each helper app and tap Activate Live Activity. Tap again to stop.")
+        return
+      }
+      let returnTo = options.returnTo!
       switch options.command {
       case "start":
         print("Building helpers as needed and invoking Shortcuts actions...")

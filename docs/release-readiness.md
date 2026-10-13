@@ -2,6 +2,8 @@
 
 Snapshot: 28 September 2026. This is a local review checklist. No commit, push, or release was made in this work session.
 
+Update, 13 October 2026: the source is under review in [PR #1](https://github.com/Zheckan/IslandStack/pull/1) and stacked [PR #2](https://github.com/Zheckan/IslandStack/pull/2). The package now includes an interactive installer, three helper apps, activation buttons, and an original app icon; see [the current verification](npx-installer-findings.md). The npm package has not been published. Registry ownership, the final package name, and release authorization still need to be settled before `npx islandstack` can download it from npm. The September checklist below records the earlier state; checks on another Mac and additional runtime versions remain open.
+
 ## Prepared
 
 - The source checkout has a CLI, two native helper identities, a Shortcuts UI driver, tests, a [README](../README.md), and a proposed [MIT license](../LICENSE).
