@@ -69,7 +69,7 @@ class InteractiveMenuTests(unittest.TestCase):
         path = subprocess.check_output(
             ["swift", "build", "--show-bin-path"], cwd=ROOT, text=True,
         ).strip()
-        cls.binary = Path(path) / "islandstack"
+        cls.binary = Path(path) / "skellige"
         doctor = subprocess.check_output([str(cls.binary), "doctor"], text=True)
         cls.devices = re.findall(r"^(.+): ([A-F0-9-]{36}) \[", doctor, re.MULTILINE)
         if not cls.devices:
@@ -107,7 +107,7 @@ class InteractiveMenuTests(unittest.TestCase):
         session.send(b"\x1b[B\x1b[B\x1b[A\x1b[A\x1b[A\r")
         session.wait_for("Selected: 3 helper apps")
         # The temporary caller directory prevents the host from finding a project.
-        session.wait_for("Run this command from an IslandStack source checkout.")
+        session.wait_for("Run this command from a Skellige source checkout.")
         self.assertEqual(session.process.wait(timeout=5), 1)
         self.assert_terminal_restored(session)
 
@@ -122,11 +122,11 @@ class InteractiveMenuTests(unittest.TestCase):
     def test_j_k_changes_choice_and_q_cancels(self):
         session = self.session(["install", "--device", self.devices[0][1]])
         session.wait_for("Use ↑/↓")
-        session.wait_for("Install IslandStack A.")
+        session.wait_for("Install An Craite.")
         session.send(b"j")
-        session.wait_for("Install IslandStack A and B.")
+        session.wait_for("Install An Craite and Tordarroch.")
         session.send(b"j")
-        session.wait_for("Install IslandStack A, B, and C.")
+        session.wait_for("Install An Craite, Tordarroch, and Drummond.")
         session.send(b"k\r")
         session.wait_for("Selected: 2 helper apps")
         self.assertEqual(session.process.wait(timeout=5), 1)

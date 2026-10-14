@@ -64,38 +64,38 @@ final class ShortcutActionsUITests: XCTestCase {
   }
 
   @MainActor func testStartA() throws {
-    try runAction(appName: "IslandStack A", buttonLabel: "Flash")
+    try runAction(appName: "An Craite", buttonLabel: "Flash")
   }
 
   @MainActor func testStopA() throws {
-    try runAction(appName: "IslandStack A", buttonLabel: "Stop Button In A Circle")
+    try runAction(appName: "An Craite", buttonLabel: "Stop Button In A Circle")
   }
 
   @MainActor func testStatusA() throws {
-    try runAction(appName: "IslandStack A", buttonLabel: "Info")
+    try runAction(appName: "An Craite", buttonLabel: "Info")
   }
 
   @MainActor func testStartB() throws {
-    try runAction(appName: "IslandStack B", buttonLabel: "Flame")
+    try runAction(appName: "Tordarroch", buttonLabel: "Flame")
   }
 
   @MainActor func testStopB() throws {
-    try runAction(appName: "IslandStack B", buttonLabel: "Stop Button In A Circle")
+    try runAction(appName: "Tordarroch", buttonLabel: "Stop Button In A Circle")
   }
 
   @MainActor func testStatusB() throws {
-    try runAction(appName: "IslandStack B", buttonLabel: "Info")
+    try runAction(appName: "Tordarroch", buttonLabel: "Info")
   }
 
   @MainActor func testStartC() throws {
-    try runAction(appName: "IslandStack C", buttonLabel: "Do Not Disturb")
+    try runAction(appName: "Drummond", buttonLabel: "Do Not Disturb")
   }
 
   @MainActor func testStopC() throws {
-    try runAction(appName: "IslandStack C", buttonLabel: "Stop Button In A Circle")
+    try runAction(appName: "Drummond", buttonLabel: "Stop Button In A Circle")
   }
 
   @MainActor func testStatusC() throws {
-    try runAction(appName: "IslandStack C", buttonLabel: "Info")
+    try runAction(appName: "Drummond", buttonLabel: "Info")
   }
 }

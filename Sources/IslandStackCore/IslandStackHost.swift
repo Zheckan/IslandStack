@@ -7,6 +7,14 @@ public enum Competitor: String, CaseIterable, Sendable {
   case c = "C"
 
   public var bundleID: String { "dev.islandstack.competitor.\(rawValue.lowercased())" }
+  // Helper apps are named after Skellige clans; keep in sync with ISLANDSTACK_DISPLAY_NAME.
+  public var name: String {
+    switch self {
+    case .a: "An Craite"
+    case .b: "Tordarroch"
+    case .c: "Drummond"
+    }
+  }
 }
 
 public enum HelperAction: String, Sendable {
@@ -29,15 +37,15 @@ public enum HostError: Error, CustomStringConvertible {
 
   public var description: String {
     switch self {
-    case .missingProject: "Run this command from an IslandStack source checkout."
+    case .missingProject: "Run this command from a Skellige source checkout."
     case .missingBuild(let path): "Xcode did not produce \(path.path)."
     case .missingReceipt(let competitor, let action):
-      "\(competitor.rawValue) did not acknowledge \(action.rawValue) within 30 seconds."
+      "\(competitor.name) did not acknowledge \(action.rawValue) within 30 seconds."
     case .invalidCompetitorCount: "--competitors must be 1, 2, or 3."
     case .targetNotInstalled(let bundleID):
       "Return app \(bundleID) is not installed on the selected Simulator."
     case .unexpectedCount(let competitor, let action, let count):
-      "\(competitor.rawValue) reported \(count) activities after \(action.rawValue)."
+      "\(competitor.name) reported \(count) activities after \(action.rawValue)."
     case .partialStart(let message): message
     case .partialStop(let message): message
     }
@@ -117,8 +125,8 @@ public final class IslandStackHost {
           states.append(CompetitorState(competitor: competitor, installed: true, count: 1))
         } catch {
           guard !states.isEmpty else { throw error }
-          let started = states.map { $0.competitor.rawValue }.joined(separator: ", ")
-          throw HostError.partialStart("\(competitor.rawValue) failed to start after starting \(started). "
+          let started = states.map { $0.competitor.name }.joined(separator: ", ")
+          throw HostError.partialStart("\(competitor.name) failed to start after starting \(started). "
             + "Run status to verify and stop to clean up. Cause: \(error)")
         }
       }
@@ -156,12 +164,12 @@ public final class IslandStackHost {
           }
           states.append(CompetitorState(competitor: competitor, installed: true, count: 0))
         } catch {
-          failures.append("\(competitor.rawValue): \(error)")
+          failures.append("\(competitor.name): \(error)")
         }
       }
       if !failures.isEmpty {
         let stopped = states.filter { $0.installed && $0.count == 0 }
-          .map { $0.competitor.rawValue }.joined(separator: ", ")
+          .map { $0.competitor.name }.joined(separator: ", ")
         throw HostError.partialStop("Stop failed for \(failures.joined(separator: "; ")). "
           + "Stopped: \(stopped.isEmpty ? "none" : stopped). Run status to verify remaining activities.")
       }

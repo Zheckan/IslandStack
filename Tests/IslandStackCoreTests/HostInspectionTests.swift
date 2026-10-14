@@ -12,9 +12,9 @@ final class HostInspectionTests: XCTestCase {
       guard case HostError.partialStop(let message) = error else {
         return XCTFail("Expected a partial cleanup failure, received \(error)")
       }
-      XCTAssertTrue(message.contains("A:"))
+      XCTAssertTrue(message.contains("An Craite:"))
       XCTAssertTrue(message.contains("Timed out"))
-      XCTAssertTrue(message.contains("Stopped: B."))
+      XCTAssertTrue(message.contains("Stopped: Tordarroch."))
     }
     XCTAssertEqual(fixture.activeHelpers, [.a])
     XCTAssertEqual(fixture.foregroundApp, fixture.target)

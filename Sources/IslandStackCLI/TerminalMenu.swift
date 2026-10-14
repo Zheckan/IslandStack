@@ -110,7 +110,7 @@ enum TerminalMenu {
       line(3, "Q or Ctrl+C cancels.")
       return
     }
-    line(1, "IslandStack setup", style: "\u{1B}[1;36m")
+    line(1, "Skellige setup", style: "\u{1B}[1;36m")
     line(3, prompt, style: "\u{1B}[1m")
     let visibleCount = height - 12
     let offset = max(0, selected - visibleCount + 1)

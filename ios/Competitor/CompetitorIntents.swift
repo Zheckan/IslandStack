@@ -4,11 +4,11 @@ import Foundation
 @available(iOS 17.0, *)
 struct StartCompetitorIntent: LiveActivityIntent {
   #if COMPETITOR_C
-  static let title: LocalizedStringResource = "Start IslandStack C"
+  static let title: LocalizedStringResource = "Start Drummond"
   #elseif COMPETITOR_B
-  static let title: LocalizedStringResource = "Start IslandStack B"
+  static let title: LocalizedStringResource = "Start Tordarroch"
   #else
-  static let title: LocalizedStringResource = "Start IslandStack A"
+  static let title: LocalizedStringResource = "Start An Craite"
   #endif
   static var openAppWhenRun: Bool { false }
 
@@ -25,11 +25,11 @@ struct StartCompetitorIntent: LiveActivityIntent {
 @available(iOS 17.0, *)
 struct StopCompetitorIntent: LiveActivityIntent {
   #if COMPETITOR_C
-  static let title: LocalizedStringResource = "Stop IslandStack C"
+  static let title: LocalizedStringResource = "Stop Drummond"
   #elseif COMPETITOR_B
-  static let title: LocalizedStringResource = "Stop IslandStack B"
+  static let title: LocalizedStringResource = "Stop Tordarroch"
   #else
-  static let title: LocalizedStringResource = "Stop IslandStack A"
+  static let title: LocalizedStringResource = "Stop An Craite"
   #endif
   static var openAppWhenRun: Bool { false }
 
@@ -46,11 +46,11 @@ struct StopCompetitorIntent: LiveActivityIntent {
 @available(iOS 17.0, *)
 struct StatusCompetitorIntent: AppIntent {
   #if COMPETITOR_C
-  static let title: LocalizedStringResource = "Status IslandStack C"
+  static let title: LocalizedStringResource = "Status Drummond"
   #elseif COMPETITOR_B
-  static let title: LocalizedStringResource = "Status IslandStack B"
+  static let title: LocalizedStringResource = "Status Tordarroch"
   #else
-  static let title: LocalizedStringResource = "Status IslandStack A"
+  static let title: LocalizedStringResource = "Status An Craite"
   #endif
   static var openAppWhenRun: Bool { false }
 

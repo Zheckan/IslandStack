@@ -1,7 +1,7 @@
 {
-  "name": "islandstack",
+  "name": "skellige",
   "version": "0.1.0",
-  "description": "Start competing Live Activities on an iPhone Simulator",
+  "description": "Start rival Live Activities on an iPhone Simulator",
   "license": "MIT",
   "repository": "github:Zheckan/IslandStack",
   "os": ["darwin"],
@@ -9,7 +9,7 @@
     "node": ">=18"
   },
   "bin": {
-    "islandstack": "bin/islandstack.js"
+    "skellige": "bin/skellige.js"
   },
   "files": [
     "Package.swift",

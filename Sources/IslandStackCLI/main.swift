@@ -21,7 +21,7 @@ private struct Options {
   init(arguments: [String]) throws {
     let first = arguments.first ?? "install"
     guard ["install", "doctor", "start", "status", "stop", "help"].contains(first) else {
-      throw CLIError.usage("Expected install, doctor, start, status, or stop. Run islandstack help.")
+      throw CLIError.usage("Expected install, doctor, start, status, or stop. Run skellige help.")
     }
     command = first
     var index = 1
@@ -39,7 +39,7 @@ private struct Options {
           throw CLIError.usage("--competitors must be 1, 2, or 3.")
         }
         competitors = number
-      default: throw CLIError.usage("Unknown option \(flag). Run islandstack help.")
+      default: throw CLIError.usage("Unknown option \(flag). Run skellige help.")
       }
       index += 2
     }
@@ -57,14 +57,14 @@ private struct Options {
 
 private func printUsage() {
   print("""
-    IslandStack: create competing Live Activities on a booted iPhone Simulator.
+    Skellige: start rival Live Activities on a booted iPhone Simulator.
 
-    npx islandstack
-    npx islandstack install --competitors 3 --device <udid>
-    npx islandstack doctor
-    npx islandstack start --competitors 3 --device <udid> --return-to <target-bundle-id>
-    npx islandstack status --device <udid> --return-to <target-bundle-id>
-    npx islandstack stop --device <udid> --return-to <target-bundle-id>
+    npx skellige
+    npx skellige install --competitors 3 --device <udid>
+    npx skellige doctor
+    npx skellige start --competitors 3 --device <udid> --return-to <target-bundle-id>
+    npx skellige status --device <udid> --return-to <target-bundle-id>
+    npx skellige stop --device <udid> --return-to <target-bundle-id>
 
     Without a command, choose a booted Simulator and install 1, 2, or 3 helper apps.
     Interactive menus use arrows or J/K and Enter. Esc goes back; Q or Ctrl+C cancels.
@@ -77,10 +77,13 @@ private func printUsage() {
 private func printStates(_ states: [CompetitorState]) {
   for state in states {
     if let count = state.count {
-      print("\(state.competitor.rawValue): \(count) active")
+      print("\(state.competitor.name): \(count) active")
     } else {
-      print("\(state.competitor.rawValue): not installed")
+      print("\(state.competitor.name): not installed")
     }
+  }
+  if states.count == Competitor.allCases.count, states.allSatisfy({ ($0.count ?? 0) > 0 }) {
+    print("The Skellige throne is contested.")
   }
 }
 
@@ -130,9 +133,9 @@ private struct IslandStackCLI {
             do {
               options.competitors = try TerminalMenu.choose("How many helper apps? One Live Activity per app:",
                 options: [
-                  TerminalMenuOption(title: "1 helper app", description: "Install IslandStack A. Tap its Activate Live Activity button to start one activity. Installation leaves existing apps and activities alone."),
-                  TerminalMenuOption(title: "2 helper apps", description: "Install IslandStack A and B. Each app can start one activity. iOS chooses which activities appear in the Dynamic Island."),
-                  TerminalMenuOption(title: "3 helper apps", description: "Install IslandStack A, B, and C. Each app can start one activity. Three active activities do not guarantee three visible Island items.")
+                  TerminalMenuOption(title: "1 helper app", description: "Install An Craite. Tap its Activate Live Activity button to start one activity. Installation leaves existing apps and activities alone."),
+                  TerminalMenuOption(title: "2 helper apps", description: "Install An Craite and Tordarroch. Each app can start one activity. iOS chooses which activities appear in the Dynamic Island."),
+                  TerminalMenuOption(title: "3 helper apps", description: "Install An Craite, Tordarroch, and Drummond. Each app can start one activity. Three active activities do not guarantee three visible Island items.")
                 ], allowsBack: allowsDeviceChoice) + 1
             } catch TerminalMenuError.back {
               continue
@@ -150,7 +153,7 @@ private struct IslandStackCLI {
       if options.command == "install" {
         print("Building and installing helper apps...")
         for competitor in try host.install(competitors: options.competitors!) {
-          print("IslandStack \(competitor.rawValue): installed")
+          print("\(competitor.name): installed")
         }
         print("Open each helper app and tap Activate Live Activity. Tap again to stop.")
         return
@@ -168,10 +171,10 @@ private struct IslandStackCLI {
       }
       print("Returned to \(returnTo).")
     } catch TerminalMenuError.cancelled {
-      fputs("islandstack: Cancelled.\n", stderr)
+      fputs("skellige: Cancelled.\n", stderr)
       exit(130)
     } catch {
-      fputs("islandstack: \(error)\n", stderr)
+      fputs("skellige: \(error)\n", stderr)
       exit(1)
     }
   }
