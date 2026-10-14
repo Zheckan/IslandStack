@@ -30,10 +30,10 @@ class TerminalSession:
             env={**os.environ, "TERM": "xterm-256color"},
         )
 
-    def wait_for(self, text):
+    def wait_for(self, text, occurrences=1):
         deadline = time.monotonic() + 15
         expected = text.encode()
-        while expected not in self.output:
+        while self.output.count(expected) < occurrences:
             if time.monotonic() >= deadline:
                 raise AssertionError(f"Missing {text!r} in {self.output.decode(errors='replace')}")
             if select.select([self.master], [], [], 0.1)[0]:
@@ -90,7 +90,7 @@ class InteractiveMenuTests(unittest.TestCase):
         session.send(b"\x1b[B\r")
         session.wait_for(f"Selected: {self.devices[1][0]}")
         session.wait_for("How many helper apps?")
-        session.send(b"\x1b")
+        session.send(b"q")
         session.wait_for("Cancelled.")
         self.assertEqual(session.process.wait(timeout=5), 130)
         self.assert_terminal_restored(session)
@@ -109,6 +109,40 @@ class InteractiveMenuTests(unittest.TestCase):
         session = self.session(["install", "--device", self.devices[0][1]])
         session.wait_for("Use ↑/↓")
         session.send(b"\x03")
+        session.wait_for("Cancelled.")
+        self.assertEqual(session.process.wait(timeout=5), 130)
+        self.assert_terminal_restored(session)
+
+    def test_j_k_changes_choice_and_q_cancels(self):
+        session = self.session(["install", "--device", self.devices[0][1]])
+        session.wait_for("Use ↑/↓")
+        session.send(b"jjk\r")
+        session.wait_for("Selected: 2 helper apps")
+        self.assertEqual(session.process.wait(timeout=5), 1)
+        self.assert_terminal_restored(session)
+
+        cancelled = self.session(["install", "--device", self.devices[0][1]])
+        cancelled.wait_for("Use ↑/↓")
+        cancelled.send(b"q")
+        cancelled.wait_for("Cancelled.")
+        self.assertEqual(cancelled.process.wait(timeout=5), 130)
+        self.assert_terminal_restored(cancelled)
+
+    def test_escape_returns_to_simulator_picker(self):
+        if len(self.devices) < 2:
+            self.skipTest("Requires two booted iPhone Simulators")
+        session = self.session()
+        session.wait_for("Use ↑/↓")
+        session.send(b"\x1b[B\r")
+        session.wait_for(f"Selected: {self.devices[1][0]}")
+        session.wait_for("How many helper apps?")
+        previous_screens = session.output.count(b"Choose a booted iPhone Simulator:")
+        session.send(b"\x1b")
+        session.wait_for("Choose a booted iPhone Simulator:", previous_screens + 1)
+        # Back retains the previous selection, so Up now chooses the first device.
+        session.send(b"\x1b[A\r")
+        session.wait_for(f"Selected: {self.devices[0][0]}")
+        session.send(b"q")
         session.wait_for("Cancelled.")
         self.assertEqual(session.process.wait(timeout=5), 130)
         self.assert_terminal_restored(session)

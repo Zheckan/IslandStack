@@ -67,7 +67,8 @@ private func printUsage() {
     npx islandstack stop --device <udid> --return-to <target-bundle-id>
 
     Without a command, choose a booted Simulator and install 1, 2, or 3 helper apps.
-    Interactive menus use arrow keys and Enter; Esc or Ctrl+C cancels. Piped input uses numbers.
+    Interactive menus use arrows or J/K and Enter. Esc goes back; Q or Ctrl+C cancels.
+    Esc cancels on the first screen. Piped input uses numbers.
     Install prompts for missing choices; other commands need --device when multiple iPhones are booted.
     Start, status, and stop briefly open Shortcuts, then launch --return-to.
     """)
@@ -108,22 +109,36 @@ private struct IslandStackCLI {
       }
 
       if options.command == "install" {
-        if options.udid == nil {
-          let eligible = devices.filter(\.isEligible)
-          guard !eligible.isEmpty else { throw DeviceSelectionError.noBootedIPhone }
-          if eligible.count == 1 {
-            options.udid = eligible[0].udid
-          } else {
-            let choice = try TerminalMenu.choose("Choose a booted iPhone Simulator:",
-              options: eligible.map { "\($0.name) [\($0.runtime)]" })
+        let eligible = devices.filter(\.isEligible)
+        if options.udid == nil, eligible.isEmpty { throw DeviceSelectionError.noBootedIPhone }
+        let allowsDeviceChoice = options.udid == nil && eligible.count > 1
+        var previousChoice = 0
+        while true {
+          if allowsDeviceChoice {
+            let choice = try TerminalMenu.choose("Choose a booted iPhone Simulator:", options: eligible.map {
+              TerminalMenuOption(title: "\($0.name) [\($0.runtime)]",
+                description: "Install the helper apps on \($0.name). Device ID: \($0.udid). Choose a Dynamic Island model to test Island presentation.")
+            }, initialChoice: previousChoice)
+            previousChoice = choice
             options.udid = eligible[choice].udid
+          } else if options.udid == nil {
+            options.udid = eligible[0].udid
           }
-        }
-        // Validate the selected device before asking how many apps to install.
-        _ = try DeviceSelection.choose(from: devices, requestedUDID: options.udid)
-        if options.competitors == nil {
-          options.competitors = try TerminalMenu.choose("How many helper apps? One Live Activity per app:",
-            options: ["1 helper app", "2 helper apps", "3 helper apps"]) + 1
+          // Validate the selected device before asking how many apps to install.
+          _ = try DeviceSelection.choose(from: devices, requestedUDID: options.udid)
+          if options.competitors == nil {
+            do {
+              options.competitors = try TerminalMenu.choose("How many helper apps? One Live Activity per app:",
+                options: [
+                  TerminalMenuOption(title: "1 helper app", description: "Install IslandStack A. Tap its Activate Live Activity button to start one activity. Installation leaves existing apps and activities alone."),
+                  TerminalMenuOption(title: "2 helper apps", description: "Install IslandStack A and B. Each app can start one activity. iOS chooses which activities appear in the Dynamic Island."),
+                  TerminalMenuOption(title: "3 helper apps", description: "Install IslandStack A, B, and C. Each app can start one activity. Three active activities do not guarantee three visible Island items.")
+                ], allowsBack: allowsDeviceChoice) + 1
+            } catch TerminalMenuError.back {
+              continue
+            }
+          }
+          break
         }
       }
       let selected = try DeviceSelection.choose(from: devices, requestedUDID: options.udid)

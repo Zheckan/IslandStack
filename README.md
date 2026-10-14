@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo/logo-dark.png">
+    <img src="docs/logo/logo-light.png" width="128" alt="IslandStack logo">
+  </picture>
+</p>
+
 # IslandStack
 
 IslandStack starts one, two, or three dummy Live Activities on a running iPhone Simulator. Use it while testing how your app's activity shares the Dynamic Island with activities from other apps. Each dummy activity belongs to a separate IslandStack helper app.
