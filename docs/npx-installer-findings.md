@@ -14,13 +14,13 @@ For automation, use `install --competitors 3 --device <udid>` without prompts. E
 
 ## App icon
 
-The original raster artwork is in `ios/Competitor/Assets.xcassets/AppIcon.appiconset/AppIcon.png`. It is an opaque 1024 × 1024 PNG shared by the three helper app builds. Xcode's native asset catalog produces the required app icon sizes. The artwork contains no Apple logo or SF Symbols.
+The icon source is `ios/Competitor/AppIcon.icon`, an Icon Composer document shared by the three helper app builds. It shows a Dynamic Island split into a pill and a separate bubble, with the helpers' cyan, orange, and purple colors. It has light and dark backgrounds; Xcode generates the tinted and clear variants. The artwork contains no Apple logo or SF Symbols.
 
-The built-in image generation tool produced the artwork with this final prompt:
+`docs/logo/logo-light.png` and `docs/logo/logo-dark.png` are 256 px README renders. Regenerate them with Icon Composer's `ictool`:
 
-> Use case: logo-brand. Asset type: production iOS app icon for IslandStack, a developer utility for testing multiple Dynamic Island Live Activities. Create one square 1024x1024 opaque app-icon image. Original minimal geometric logo: three broad floating horizontal capsule islands arranged in a short vertical stack with slight elegant offset, the three capsules colored luminous cyan, orange and violet respectively, with restrained highlights for clear dimensionality. Deep midnight navy background extending to every edge. Strong central silhouette, generous safe space, legible at small home-screen sizes. Apple-native visual polish, clean modern geometry, softly lit materials, calm restrained design. No typography, no letters, no Apple logo, no SF Symbols, no borders, no rounded outer-square mask, no phone illustration, no mockup. The square artwork itself is the deliverable, not an image of an icon.
-
-The generated image was resized to 1024 × 1024 for the asset catalog. Source fingerprinting includes the asset catalog so an icon change invalidates the cached native build.
+```sh
+ictool ios/Competitor/AppIcon.icon --export-image --output-file docs/logo/logo-dark.png --platform iOS --rendition Dark --width 256 --height 256 --scale 1
+```
 
 ## Verification
 

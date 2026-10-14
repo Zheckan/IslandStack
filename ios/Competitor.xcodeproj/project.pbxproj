@@ -16,6 +16,7 @@
 		A00000000000000000000008 = {isa = PBXBuildFile; fileRef = B00000000000000000000006; };
 		A00000000000000000000009 = {isa = PBXBuildFile; fileRef = B0000000000000000000000A; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A0000000000000000000000A = {isa = PBXBuildFile; fileRef = B0000000000000000000000D; };
+		A0000000000000000000000B = {isa = PBXBuildFile; fileRef = B0000000000000000000000E; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,6 +39,7 @@
 		B0000000000000000000000B = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "App-Info.plist"; sourceTree = "<group>"; };
 		B0000000000000000000000C = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Widget-Info.plist"; sourceTree = "<group>"; };
 		B0000000000000000000000D = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B0000000000000000000000E = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,7 +50,7 @@
 /* Begin PBXGroup section */
 		F00000000000000000000002 = {isa = PBXGroup; children = (F00000000000000000000008, F00000000000000000000003, ); sourceTree = "<group>"; };
 		F00000000000000000000003 = {isa = PBXGroup; children = (B00000000000000000000009, B0000000000000000000000A, ); name = Products; sourceTree = "<group>"; };
-		F00000000000000000000008 = {isa = PBXGroup; children = (B00000000000000000000001, B00000000000000000000002, B00000000000000000000003, B00000000000000000000004, B00000000000000000000005, B00000000000000000000006, B0000000000000000000000B, B0000000000000000000000C, B0000000000000000000000D, ); path = Competitor; sourceTree = "<group>"; };
+		F00000000000000000000008 = {isa = PBXGroup; children = (B00000000000000000000001, B00000000000000000000002, B00000000000000000000003, B00000000000000000000004, B00000000000000000000005, B00000000000000000000006, B0000000000000000000000B, B0000000000000000000000C, B0000000000000000000000D, B0000000000000000000000E, ); path = Competitor; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -61,7 +63,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-        E00000000000000000000006 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A0000000000000000000000A, ); runOnlyForDeploymentPostprocessing = 0; };
+        E00000000000000000000006 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A0000000000000000000000A, A0000000000000000000000B, ); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
