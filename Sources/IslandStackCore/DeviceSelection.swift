@@ -21,10 +21,23 @@ public struct SimulatorDevice: Equatable {
   }
 
   public var isEligible: Bool {
+    isCompatible && state == "Booted"
+  }
+
+  public var isEligibleForInstallation: Bool {
+    isCompatible && (state == "Booted" || state == "Shutdown")
+  }
+
+  public var runtimeName: String {
+    runtime.replacingOccurrences(of: "com.apple.CoreSimulator.SimRuntime.iOS-", with: "iOS ")
+      .replacingOccurrences(of: "-", with: ".")
+  }
+
+  private var isCompatible: Bool {
     let runtimeMajor = runtime.components(separatedBy: "SimRuntime.iOS-").last?
       .split(separator: "-").first.flatMap { Int($0) } ?? 0
     let isIPhone = deviceTypeIdentifier?.contains("SimDeviceType.iPhone") ?? name.hasPrefix("iPhone")
-    return isIPhone && runtimeMajor >= 17 && isAvailable && state == "Booted"
+    return isIPhone && runtimeMajor >= 17 && isAvailable
   }
 }
 

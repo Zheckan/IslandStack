@@ -5,6 +5,7 @@ Run after swift build: python3 -m unittest discover -s Tests/CLI -v
 
 import os
 import fcntl
+import json
 import pty
 import re
 import select
@@ -94,7 +95,7 @@ class InteractiveMenuTests(unittest.TestCase):
         session = self.session()
         session.wait_for("Use ↑/↓")
         session.send(b"\x1b[B\r")
-        session.wait_for(f"Selected: {self.devices[1][0]}")
+        session.wait_for(f"Selected: [Running] {self.devices[1][0]}")
         session.wait_for("How many helper apps?")
         session.send(b"q")
         session.wait_for("Cancelled.")
@@ -145,14 +146,14 @@ class InteractiveMenuTests(unittest.TestCase):
         session = self.session()
         session.wait_for("Use ↑/↓")
         session.send(b"\x1b[B\r")
-        session.wait_for(f"Selected: {self.devices[1][0]}")
+        session.wait_for(f"Selected: [Running] {self.devices[1][0]}")
         session.wait_for("How many helper apps?")
-        previous_screens = session.output.count(b"Choose a booted iPhone Simulator:")
+        previous_screens = session.output.count(b"Choose an iPhone Simulator:")
         session.send(b"\x1b")
-        session.wait_for("Choose a booted iPhone Simulator:", previous_screens + 1)
+        session.wait_for("Choose an iPhone Simulator:", previous_screens + 1)
         # Back retains the previous selection, so Up now chooses the first device.
         session.send(b"\x1b[A\r")
-        session.wait_for(f"Selected: {self.devices[0][0]}")
+        session.wait_for(f"Selected: [Running] {self.devices[0][0]}")
         session.send(b"q")
         session.wait_for("Cancelled.")
         self.assertEqual(session.process.wait(timeout=5), 130)
@@ -179,3 +180,26 @@ class InteractiveMenuTests(unittest.TestCase):
         self.assertIn("Selected: 2 helper apps", result.stdout)
         self.assertIn("source checkout", result.stderr)
         self.assertEqual(result.returncode, 1)
+
+    def test_new_device_choice_can_be_cancelled_without_creation(self):
+        catalog = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "-j"]))
+        existing = [
+            device for runtime, devices in catalog["devices"].items()
+            if "SimRuntime.iOS-" in runtime and int(runtime.split("iOS-")[1].split("-")[0]) >= 17
+            for device in devices if device["isAvailable"] and device["state"] in ("Booted", "Shutdown")
+            and "SimDeviceType.iPhone" in device.get("deviceTypeIdentifier", "")
+        ]
+        before = {d["udid"] for devices in catalog["devices"].values() for d in devices}
+        session = self.session()
+        session.wait_for("Use ↑/↓")
+        session.send(b"j" * len(existing))
+        session.wait_for("Create and boot a separate")
+        session.send(b"\r")
+        session.wait_for("Selected: [New]")
+        session.wait_for("How many helper apps?")
+        session.send(b"q")
+        session.wait_for("Cancelled.")
+        self.assertEqual(session.process.wait(timeout=5), 130)
+        self.assert_terminal_restored(session)
+        after = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "-j"]))
+        self.assertEqual(before, {d["udid"] for devices in after["devices"].values() for d in devices})

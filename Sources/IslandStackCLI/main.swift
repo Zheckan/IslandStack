@@ -66,10 +66,11 @@ private func printUsage() {
     npx skellige status --device <udid> --return-to <target-bundle-id>
     npx skellige stop --device <udid> --return-to <target-bundle-id>
 
-    Without a command, choose a booted Simulator and install 1, 2, or 3 helper apps.
+    Without a command, choose a running, stopped, or new Simulator and install 1, 2, or 3 helper apps.
     Interactive menus use arrows or J/K and Enter. Esc goes back; Q or Ctrl+C cancels.
     Esc cancels on the first screen. Piped input uses numbers.
-    Install prompts for missing choices; other commands need --device when multiple iPhones are booted.
+    Install boots or creates the selected Simulator using an installed iOS 17+ runtime.
+    Other commands need a booted Simulator and --device when multiple iPhones are booted.
     Start, status, and stop briefly open Shortcuts, then launch --return-to.
     """)
 }
@@ -111,24 +112,32 @@ private struct IslandStackCLI {
         return
       }
 
+      var installationDestination: SimulatorDestination?
       if options.command == "install" {
-        let eligible = devices.filter(\.isEligible)
-        if options.udid == nil, eligible.isEmpty { throw DeviceSelectionError.noBootedIPhone }
-        let allowsDeviceChoice = options.udid == nil && eligible.count > 1
+        let destinations: [SimulatorDestination]
+        if let udid = options.udid {
+          guard let device = devices.first(where: { $0.udid == udid && $0.isEligibleForInstallation }) else {
+            throw CLIError.usage("Simulator \(udid) is not an available iPhone with iOS 17 or newer.")
+          }
+          destinations = [.existing(device)]
+        } else {
+          destinations = try SimulatorControl.installationDestinations()
+        }
+        guard !destinations.isEmpty else {
+          throw CLIError.usage("No eligible iPhone Simulators or installed iOS 17+ runtimes. Install an iOS runtime in Xcode first.")
+        }
+        let allowsDeviceChoice = options.udid == nil
         var previousChoice = 0
         while true {
           if allowsDeviceChoice {
-            let choice = try TerminalMenu.choose("Choose a booted iPhone Simulator:", options: eligible.map {
-              TerminalMenuOption(title: "\($0.name) [\($0.runtime)]",
-                description: "Install the helper apps on \($0.name). Device ID: \($0.udid). Choose a Dynamic Island model to test Island presentation.")
+            let choice = try TerminalMenu.choose("Choose an iPhone Simulator:", options: destinations.map {
+              TerminalMenuOption(title: $0.title, description: $0.detail)
             }, initialChoice: previousChoice)
             previousChoice = choice
-            options.udid = eligible[choice].udid
-          } else if options.udid == nil {
-            options.udid = eligible[0].udid
+            installationDestination = destinations[choice]
+          } else {
+            installationDestination = destinations[0]
           }
-          // Validate the selected device before asking how many apps to install.
-          _ = try DeviceSelection.choose(from: devices, requestedUDID: options.udid)
           if options.competitors == nil {
             do {
               options.competitors = try TerminalMenu.choose("How many helper apps? One Live Activity per app:",
@@ -144,10 +153,23 @@ private struct IslandStackCLI {
           break
         }
       }
-      let selected = try DeviceSelection.choose(from: devices, requestedUDID: options.udid)
-      let root = try IslandStackHost.findRoot(
-        startingAt: URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-      )
+      let selected: SimulatorDevice
+      let root: URL
+      let caller = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+      if let destination = installationDestination {
+        // Validate the source before creating or booting a Simulator.
+        root = try IslandStackHost.findRoot(startingAt: caller)
+        switch destination {
+        case .existing(let device):
+          print(device.state == "Booted" ? "Using running Simulator: \(device.name)" : "Booting existing Simulator: \(device.name)...")
+        case .create(let configuration):
+          print("Creating and booting \(configuration.name) · \(configuration.runtimeName)...")
+        }
+        selected = try SimulatorControl.prepare(destination)
+      } else {
+        selected = try DeviceSelection.choose(from: devices, requestedUDID: options.udid)
+        root = try IslandStackHost.findRoot(startingAt: caller)
+      }
       let host = try IslandStackHost(root: root, udid: selected.udid)
       print("Simulator: \(selected.name) (\(selected.udid))")
       if options.command == "install" {
