@@ -62,12 +62,18 @@ enum TerminalMenu {
     write("\u{1B}[?1049h\u{1B}[?25l")
     var selected = min(max(initialChoice, 0), options.count - 1)
     while true {
-      render(prompt, options: options, selected: selected, allowsBack: allowsBack)
+      let size = terminalSize()
+      render(prompt, options: options, selected: selected, allowsBack: allowsBack, size: size)
       // Consume ignored keys without repainting the menu.
       while true {
-        guard let key = try readByte() else { throw TerminalMenuError.cancelled }
+        guard let key = try readByte(timeout: 250) else {
+          if terminalSize() != size { break }
+          continue
+        }
         switch key {
-        case 10, 13: return selected
+        case 10, 13:
+          guard size.width >= 68, size.height >= 18 else { continue }
+          return selected
         case 3, 4, 81, 113: throw TerminalMenuError.cancelled
         case 75, 107: selected = (selected + options.count - 1) % options.count
         case 74, 106: selected = (selected + 1) % options.count
@@ -86,18 +92,21 @@ enum TerminalMenu {
     }
   }
 
-  private static func render(_ prompt: String, options: [TerminalMenuOption], selected: Int,
-                             allowsBack: Bool) {
+  private static func terminalSize() -> (width: Int, height: Int) {
     var size = winsize()
     _ = ioctl(STDOUT_FILENO, TIOCGWINSZ, &size)
-    let width = size.ws_col == 0 ? 80 : Int(size.ws_col)
-    let height = size.ws_row == 0 ? 24 : Int(size.ws_row)
+    return (size.ws_col == 0 ? 80 : Int(size.ws_col), size.ws_row == 0 ? 24 : Int(size.ws_row))
+  }
+
+  private static func render(_ prompt: String, options: [TerminalMenuOption], selected: Int,
+                             allowsBack: Bool, size: (width: Int, height: Int)) {
+    let (width, height) = size
     func line(_ row: Int, _ text: String, style: String = "") {
       write("\u{1B}[\(row);3H\(style)\(text.prefix(max(0, width - 4)))\u{1B}[0m")
     }
     write("\u{1B}[2J\u{1B}[H")
-    guard width >= 44, height >= 18 else {
-      line(1, "Resize terminal to at least 44x18.")
+    guard width >= 68, height >= 18 else {
+      line(1, "Resize terminal to at least 68x18.")
       line(3, "Q or Ctrl+C cancels.")
       return
     }
@@ -138,7 +147,7 @@ enum TerminalMenu {
       var byte: UInt8 = 0
       let count = Darwin.read(STDIN_FILENO, &byte, 1)
       if count == 1 { return byte }
-      if count == 0 { return nil }
+      if count == 0 { throw TerminalMenuError.cancelled }
       if errno != EINTR { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
     }
   }

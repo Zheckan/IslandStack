@@ -29,7 +29,7 @@ npx islandstack
 
 Choose a booted iPhone Simulator and how many helper apps to install: **1, 2, or 3**. The command installs A, A/B, or A/B/C. It leaves existing helper apps and activities alone. Open the installed apps and tap their full-page **Activate Live Activity** buttons. Each identity keeps one activity; tap **Stop Live Activity** to end it.
 
-Use **↑/↓** to move between menu options and **Enter** to select. **Esc** or **Ctrl+C** cancels. Piped input and terminals with `TERM=dumb` use numbered choices instead.
+The full-screen setup shows a highlighted choice and a **What this does** explanation. Use **↑/↓** or **J/K** to move and **Enter** to confirm. **Esc** goes back from helper count to Simulator selection, or cancels on the first screen. **Q** or **Ctrl+C** cancels from either screen. Piped input and terminals with `TERM=dumb` use numbered choices instead.
 
 To install without prompts:
 

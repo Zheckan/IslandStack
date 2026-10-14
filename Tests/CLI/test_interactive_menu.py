@@ -4,10 +4,12 @@ Run after swift build: python3 -m unittest discover -s Tests/CLI -v
 """
 
 import os
+import fcntl
 import pty
 import re
 import select
 import subprocess
+import struct
 import tempfile
 import termios
 import time
@@ -19,8 +21,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class TerminalSession:
-    def __init__(self, binary, arguments=()):
+    def __init__(self, binary, arguments=(), size=(24, 80)):
         self.master, self.slave = pty.openpty()
+        self.resize(*size)
         self.original_mode = termios.tcgetattr(self.slave)
         self.output = b""
         self.directory = tempfile.TemporaryDirectory()
@@ -43,6 +46,9 @@ class TerminalSession:
 
     def send(self, keys):
         os.write(self.master, keys)
+
+    def resize(self, rows, columns):
+        fcntl.ioctl(self.slave, termios.TIOCSWINSZ, struct.pack("HHHH", rows, columns, 0, 0))
 
     def close(self):
         if self.process.poll() is None:
@@ -69,8 +75,8 @@ class InteractiveMenuTests(unittest.TestCase):
         if not cls.devices:
             raise unittest.SkipTest("Requires an eligible booted iPhone Simulator")
 
-    def session(self, arguments=()):
-        session = TerminalSession(self.binary, arguments)
+    def session(self, arguments=(), size=(24, 80)):
+        session = TerminalSession(self.binary, arguments, size=size)
         self.addCleanup(session.close)
         return session
 
@@ -116,7 +122,12 @@ class InteractiveMenuTests(unittest.TestCase):
     def test_j_k_changes_choice_and_q_cancels(self):
         session = self.session(["install", "--device", self.devices[0][1]])
         session.wait_for("Use ↑/↓")
-        session.send(b"jjk\r")
+        session.wait_for("Install IslandStack A.")
+        session.send(b"j")
+        session.wait_for("Install IslandStack A and B.")
+        session.send(b"j")
+        session.wait_for("Install IslandStack A, B, and C.")
+        session.send(b"k\r")
         session.wait_for("Selected: 2 helper apps")
         self.assertEqual(session.process.wait(timeout=5), 1)
         self.assert_terminal_restored(session)
@@ -142,6 +153,17 @@ class InteractiveMenuTests(unittest.TestCase):
         # Back retains the previous selection, so Up now chooses the first device.
         session.send(b"\x1b[A\r")
         session.wait_for(f"Selected: {self.devices[0][0]}")
+        session.send(b"q")
+        session.wait_for("Cancelled.")
+        self.assertEqual(session.process.wait(timeout=5), 130)
+        self.assert_terminal_restored(session)
+
+    def test_small_terminal_recovers_after_resize(self):
+        session = self.session(["install", "--device", self.devices[0][1]], size=(12, 40))
+        session.wait_for("Resize terminal to at least 68x18.")
+        session.send(b"\r")
+        session.resize(24, 80)
+        session.wait_for("How many helper apps?")
         session.send(b"q")
         session.wait_for("Cancelled.")
         self.assertEqual(session.process.wait(timeout=5), 130)
