@@ -10,7 +10,8 @@ private struct CompetitorLiveActivity: Widget {
           .foregroundStyle(CompetitorStyle.color)
         Text(context.attributes.title)
         Spacer()
-        Text(context.state.endsAt, style: .timer)
+        CompetitorCountdown(endsAt: context.state.endsAt)
+          .frame(width: 56)
       }
       .padding()
     } dynamicIsland: { context in
@@ -23,14 +24,17 @@ private struct CompetitorLiveActivity: Widget {
           Text(context.attributes.title)
         }
         DynamicIslandExpandedRegion(.trailing) {
-          Text(context.state.endsAt, style: .timer)
+          CompetitorCountdown(endsAt: context.state.endsAt)
+            .frame(width: 56)
             .foregroundStyle(CompetitorStyle.color)
         }
       } compactLeading: {
         Image(systemName: CompetitorStyle.symbol)
           .foregroundStyle(CompetitorStyle.color)
       } compactTrailing: {
-        Text(context.state.endsAt, style: .timer)
+        CompetitorCountdown(endsAt: context.state.endsAt)
+          .font(.caption)
+          .frame(width: 44)
           .foregroundStyle(CompetitorStyle.color)
       } minimal: {
         Image(systemName: CompetitorStyle.symbol)
@@ -38,6 +42,20 @@ private struct CompetitorLiveActivity: Widget {
       }
       .keylineTint(CompetitorStyle.color)
     }
+  }
+}
+
+private struct CompetitorCountdown: View {
+  let endsAt: Date
+
+  var body: some View {
+    Text(
+      timerInterval: endsAt.addingTimeInterval(-20 * 60)...endsAt,
+      countsDown: true,
+      showsHours: false
+    )
+    .monospacedDigit()
+    .multilineTextAlignment(.trailing)
   }
 }
 

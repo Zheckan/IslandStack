@@ -1,6 +1,35 @@
 import XCTest
 
 final class ShortcutActionsUITests: XCTestCase {
+  @MainActor func testCompactIslandFitsStatusBar() {
+    let app = XCUIApplication(bundleIdentifier: "dev.islandstack.competitor.a")
+    app.launchArguments = ["stop", UUID().uuidString]
+    app.launch()
+    XCTAssertTrue(app.buttons["Activate Live Activity"].waitForExistence(timeout: 10))
+    defer {
+      app.launchArguments = ["stop", UUID().uuidString]
+      app.launch()
+    }
+
+    app.launchArguments = ["start", UUID().uuidString]
+    app.launch()
+    XCTAssertTrue(app.buttons["Stop Live Activity"].waitForExistence(timeout: 10))
+    XCUIDevice.shared.press(.home)
+
+    let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+    let island = springboard.otherElements.matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "jindo-container-view:")
+    ).firstMatch
+    XCTAssertTrue(island.waitForExistence(timeout: 10))
+    XCTAssertLessThan(island.frame.width, 250, "Compact Island occupies most of the top bar")
+
+    let timer = island.staticTexts.matching(
+      NSPredicate(format: "label MATCHES %@", "[0-9]{1,2}:[0-9]{2}")
+    ).firstMatch
+    XCTAssertTrue(timer.waitForExistence(timeout: 10))
+    XCTAssertLessThanOrEqual(timer.frame.width, 45, "Compact timer exceeds its allotted width")
+  }
+
   @MainActor
   private func runAction(appName: String, buttonLabel: String) throws {
     let shortcuts = XCUIApplication(bundleIdentifier: "com.apple.shortcuts")

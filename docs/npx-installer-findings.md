@@ -34,3 +34,26 @@ The generated image was resized to 1024 × 1024 for the asset catalog. Source fi
 - From the same packed archive, `stop` reported A0/B0/C0 and restored Safari. All IslandStack activities created in this trial were stopped; the helper apps remain installed for manual testing.
 
 The registry release remains separate. Physical devices, another Mac, and additional iOS/Xcode versions have not been verified in this change.
+
+## Compact Island layout fix, 14 October 2026
+
+The compact timer previously filled its available width, causing the Island to occupy most of the status bar. All three helpers now share a bounded countdown with monospaced digits: 44 points in the compact Island and 56 points in expanded and Lock Screen presentations. The interval ends at the activity deadline, so the timer holds at zero instead of counting upward after expiry. Explicit stop remains the activity cleanup contract.
+
+This follows [Apple's widget timer guidance](https://developer.apple.com/documentation/swiftui/text/init(timerinterval:pausetime:countsdown:showshours:)), which explains why timer text needs a constrained frame.
+
+On an isolated iPhone 15 Pro Simulator running iOS 27.0, SpringBoard accessibility measurements showed:
+
+| Measurement | Before | After |
+| --- | ---: | ---: |
+| Compact Island width | 319.7 pt | 214.3 pt |
+| Timer text width | 90.3 pt | 44.0 pt |
+
+All three app/widget variants rebuilt and installed, and all 12 host tests passed. A focused UI regression starts A, returns Home, and checks the Island and timer bounds. It failed both assertions with the original widget and passed with the fixed widget. Run it on a Dynamic Island Simulator with A installed and other activities stopped:
+
+```sh
+xcodebuild test -project ios/ShortcutDriver.xcodeproj -scheme ShortcutDriver \
+  -destination 'platform=iOS Simulator,id=<udid>' \
+  -only-testing:ShortcutDriverUITests/ShortcutActionsUITests/testCompactIslandFitsStatusBar
+```
+
+The Simulator screenshot stream omits the Island overlay, so the layout evidence comes from its accessibility frames. Expiry was not observed by waiting out a full 20-minute activity.
