@@ -2,10 +2,10 @@
 import PackageDescription
 
 let package = Package(
-  name: "IslandStack",
+  name: "Skellige",
   platforms: [.macOS(.v14)],
   products: [
-    .executable(name: "islandstack", targets: ["IslandStackCLI"])
+    .executable(name: "skellige", targets: ["IslandStackCLI"])
   ],
   targets: [
     .target(name: "IslandStackCore"),

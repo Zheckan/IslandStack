@@ -4,8 +4,17 @@ import Foundation
 public enum Competitor: String, CaseIterable, Sendable {
   case a = "A"
   case b = "B"
+  case c = "C"
 
   public var bundleID: String { "dev.islandstack.competitor.\(rawValue.lowercased())" }
+  // Helper apps are named after Skellige clans; keep in sync with ISLANDSTACK_DISPLAY_NAME.
+  public var name: String {
+    switch self {
+    case .a: "An Craite"
+    case .b: "Tordarroch"
+    case .c: "Drummond"
+    }
+  }
 }
 
 public enum HelperAction: String, Sendable {
@@ -28,15 +37,15 @@ public enum HostError: Error, CustomStringConvertible {
 
   public var description: String {
     switch self {
-    case .missingProject: "Run this command from an IslandStack source checkout."
+    case .missingProject: "Run this command from a Skellige source checkout."
     case .missingBuild(let path): "Xcode did not produce \(path.path)."
     case .missingReceipt(let competitor, let action):
-      "\(competitor.rawValue) did not acknowledge \(action.rawValue) within 30 seconds."
-    case .invalidCompetitorCount: "--competitors must be 1 or 2."
+      "\(competitor.name) did not acknowledge \(action.rawValue) within 30 seconds."
+    case .invalidCompetitorCount: "--competitors must be 1, 2, or 3."
     case .targetNotInstalled(let bundleID):
       "Return app \(bundleID) is not installed on the selected Simulator."
     case .unexpectedCount(let competitor, let action, let count):
-      "\(competitor.rawValue) reported \(count) activities after \(action.rawValue)."
+      "\(competitor.name) reported \(count) activities after \(action.rawValue)."
     case .partialStart(let message): message
     case .partialStop(let message): message
     }
@@ -90,33 +99,38 @@ public final class IslandStackHost {
     }
   }
 
+  public func install(competitors: Int) throws -> [Competitor] {
+    guard (1...3).contains(competitors) else { throw HostError.invalidCompetitorCount }
+    let selected = Array(Competitor.allCases.prefix(competitors))
+    for competitor in selected { try prepare(competitor) }
+    return selected
+  }
+
   public func start(competitors: Int, returnTo bundleID: String) throws -> [CompetitorState] {
-    guard (1...2).contains(competitors) else { throw HostError.invalidCompetitorCount }
+    guard (1...3).contains(competitors) else { throw HostError.invalidCompetitorCount }
     try validateReturnApp(bundleID)
     return try withReturn(to: bundleID) {
-      if competitors == 1, try SimulatorControl.isInstalled(Competitor.b.bundleID, on: udid, process: process) {
-        let stopped = try run(.stop, for: .b)
-        guard stopped.count == 0 else { throw HostError.unexpectedCount(.b, .stop, stopped.count) }
+      for competitor in Competitor.allCases.dropFirst(competitors) {
+        if try SimulatorControl.isInstalled(competitor.bundleID, on: udid, process: process) {
+          let receipt = try run(.stop, for: competitor)
+          guard receipt.count == 0 else { throw HostError.unexpectedCount(competitor, .stop, receipt.count) }
+        }
       }
-      try prepare(.a)
-      let a = try run(.start, for: .a)
-      guard a.count == 1 else { throw HostError.unexpectedCount(.a, .start, a.count) }
-      if competitors == 1 {
-        return [CompetitorState(competitor: .a, installed: true, count: 1)]
+      var states: [CompetitorState] = []
+      for competitor in Competitor.allCases.prefix(competitors) {
+        do {
+          try prepare(competitor)
+          let receipt = try run(.start, for: competitor)
+          guard receipt.count == 1 else { throw HostError.unexpectedCount(competitor, .start, receipt.count) }
+          states.append(CompetitorState(competitor: competitor, installed: true, count: 1))
+        } catch {
+          guard !states.isEmpty else { throw error }
+          let started = states.map { $0.competitor.name }.joined(separator: ", ")
+          throw HostError.partialStart("\(competitor.name) failed to start after starting \(started). "
+            + "Run status to verify and stop to clean up. Cause: \(error)")
+        }
       }
-      do {
-        try prepare(.b)
-        let b = try run(.start, for: .b)
-        guard b.count == 1 else { throw HostError.unexpectedCount(.b, .start, b.count) }
-      } catch {
-        let aStatus = try? run(.status, for: .a)
-        let description = aStatus.map { "A currently reports \($0.count) activity. " } ?? "A's current state could not be verified. "
-        throw HostError.partialStart("B failed to start. \(description)Run stop to clean up. Cause: \(error)")
-      }
-      return [
-        CompetitorState(competitor: .a, installed: true, count: 1),
-        CompetitorState(competitor: .b, installed: true, count: 1)
-      ]
+      return states
     }
   }
 
@@ -150,12 +164,12 @@ public final class IslandStackHost {
           }
           states.append(CompetitorState(competitor: competitor, installed: true, count: 0))
         } catch {
-          failures.append("\(competitor.rawValue): \(error)")
+          failures.append("\(competitor.name): \(error)")
         }
       }
       if !failures.isEmpty {
         let stopped = states.filter { $0.installed && $0.count == 0 }
-          .map { $0.competitor.rawValue }.joined(separator: ", ")
+          .map { $0.competitor.name }.joined(separator: ", ")
         throw HostError.partialStop("Stop failed for \(failures.joined(separator: "; ")). "
           + "Stopped: \(stopped.isEmpty ? "none" : stopped). Run status to verify remaining activities.")
       }
@@ -183,14 +197,17 @@ public final class IslandStackHost {
 
   private func fingerprint(for competitor: Competitor) throws -> String {
     let source = root.appendingPathComponent("ios/Competitor")
-    let paths = try FileManager.default.contentsOfDirectory(at: source, includingPropertiesForKeys: nil)
-      .filter { ["swift", "plist"].contains($0.pathExtension) }
+    guard let files = FileManager.default.enumerator(at: source, includingPropertiesForKeys: [.isRegularFileKey]) else {
+      throw CocoaError(.fileReadNoSuchFile)
+    }
+    let paths = try files.allObjects.compactMap { $0 as? URL }
+      .filter { try $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true }
       + [root.appendingPathComponent("ios/Competitor.xcodeproj/project.pbxproj")]
     var hasher = SHA256()
     hasher.update(data: Data(xcodeVersion.utf8))
     hasher.update(data: Data(competitor.rawValue.utf8))
     for path in paths.sorted(by: { $0.path < $1.path }) {
-      hasher.update(data: Data(path.lastPathComponent.utf8))
+      hasher.update(data: Data(path.path.replacingOccurrences(of: source.path + "/", with: "").utf8))
       hasher.update(data: try Data(contentsOf: path))
     }
     return hasher.finalize().map { String(format: "%02x", $0) }.joined()

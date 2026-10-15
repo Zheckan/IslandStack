@@ -2,6 +2,8 @@
 
 Research snapshot: 28 September 2026. `IslandStack` and `islandstack` are working names. The native helpers and source-checkout CLI now exist in this repository.
 
+Update, 13 October 2026: the implementation now includes an interactive installer, three separate helper identities, full-page activation buttons, and an original app icon. The installer can be run through the packaged Node launcher without a global installation. See [the installer findings](npx-installer-findings.md) for the current contract and verification. The September observations below remain the historical research record.
+
 The initial probes in [stage-0-findings.md](stage-0-findings.md) established native widget rendering and intent execution through saved Shortcuts, but keyboard-driven setup stalled on fresh simulators. A later route invokes each app's built-in App Shortcut directly through the Shortcuts Apps library. A fresh iPhone 15 Pro accepted one `islandstack start` command with no saved workflows or manual setup. The helper app UIs stayed closed; Shortcuts opened and the CLI restored the target app. See [stage-2-findings.md](stage-2-findings.md) for the CLI run. The iPhone 18 Pro trial had three active activities across three identities, but its stable accessibility view exposed two minimal items.
 
 ## Job to be done

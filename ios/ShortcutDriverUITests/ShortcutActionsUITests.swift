@@ -1,6 +1,35 @@
 import XCTest
 
 final class ShortcutActionsUITests: XCTestCase {
+  @MainActor func testCompactIslandFitsStatusBar() {
+    let app = XCUIApplication(bundleIdentifier: "dev.islandstack.competitor.a")
+    app.launchArguments = ["stop", UUID().uuidString]
+    app.launch()
+    XCTAssertTrue(app.buttons["Activate Live Activity"].waitForExistence(timeout: 10))
+    defer {
+      app.launchArguments = ["stop", UUID().uuidString]
+      app.launch()
+    }
+
+    app.launchArguments = ["start", UUID().uuidString]
+    app.launch()
+    XCTAssertTrue(app.buttons["Stop Live Activity"].waitForExistence(timeout: 10))
+    XCUIDevice.shared.press(.home)
+
+    let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+    let island = springboard.otherElements.matching(
+      NSPredicate(format: "identifier BEGINSWITH %@", "jindo-container-view:")
+    ).firstMatch
+    XCTAssertTrue(island.waitForExistence(timeout: 10))
+    XCTAssertLessThan(island.frame.width, 250, "Compact Island occupies most of the top bar")
+
+    let timer = island.staticTexts.matching(
+      NSPredicate(format: "label MATCHES %@", "[0-9]{1,2}:[0-9]{2}")
+    ).firstMatch
+    XCTAssertTrue(timer.waitForExistence(timeout: 10))
+    XCTAssertLessThanOrEqual(timer.frame.width, 45, "Compact timer exceeds its allotted width")
+  }
+
   @MainActor
   private func runAction(appName: String, buttonLabel: String) throws {
     let shortcuts = XCUIApplication(bundleIdentifier: "com.apple.shortcuts")
@@ -35,26 +64,38 @@ final class ShortcutActionsUITests: XCTestCase {
   }
 
   @MainActor func testStartA() throws {
-    try runAction(appName: "IslandStack A", buttonLabel: "Flash")
+    try runAction(appName: "An Craite", buttonLabel: "Flash")
   }
 
   @MainActor func testStopA() throws {
-    try runAction(appName: "IslandStack A", buttonLabel: "Stop Button In A Circle")
+    try runAction(appName: "An Craite", buttonLabel: "Stop Button In A Circle")
   }
 
   @MainActor func testStatusA() throws {
-    try runAction(appName: "IslandStack A", buttonLabel: "Info")
+    try runAction(appName: "An Craite", buttonLabel: "Info")
   }
 
   @MainActor func testStartB() throws {
-    try runAction(appName: "IslandStack B", buttonLabel: "Flame")
+    try runAction(appName: "Tordarroch", buttonLabel: "Flame")
   }
 
   @MainActor func testStopB() throws {
-    try runAction(appName: "IslandStack B", buttonLabel: "Stop Button In A Circle")
+    try runAction(appName: "Tordarroch", buttonLabel: "Stop Button In A Circle")
   }
 
   @MainActor func testStatusB() throws {
-    try runAction(appName: "IslandStack B", buttonLabel: "Info")
+    try runAction(appName: "Tordarroch", buttonLabel: "Info")
+  }
+
+  @MainActor func testStartC() throws {
+    try runAction(appName: "Drummond", buttonLabel: "Do Not Disturb")
+  }
+
+  @MainActor func testStopC() throws {
+    try runAction(appName: "Drummond", buttonLabel: "Stop Button In A Circle")
+  }
+
+  @MainActor func testStatusC() throws {
+    try runAction(appName: "Drummond", buttonLabel: "Info")
   }
 }
