@@ -3,8 +3,13 @@
   "version": "0.1.0",
   "description": "Start rival Live Activities on an iPhone Simulator",
   "license": "MIT",
-  "repository": "github:Zheckan/skellige",
-  "os": ["darwin"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zheckan/skellige.git"
+  },
+  "os": [
+    "darwin"
+  ],
   "engines": {
     "node": ">=18"
   },
