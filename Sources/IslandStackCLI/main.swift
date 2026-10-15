@@ -19,11 +19,13 @@ private struct Options {
   var competitors: Int?
 
   init(arguments: [String]) throws {
-    let first = arguments.first ?? "install"
+    // Agents and humans both reach for --help first.
+    let first = arguments.contains { ["--help", "-h"].contains($0) } ? "help" : arguments.first ?? "install"
     guard ["install", "doctor", "start", "status", "stop", "help"].contains(first) else {
       throw CLIError.usage("Expected install, doctor, start, status, or stop. Run skellige help.")
     }
     command = first
+    if command == "help" { return }
     var index = 1
     while index < arguments.count {
       let flag = arguments[index]
@@ -57,21 +59,44 @@ private struct Options {
 
 private func printUsage() {
   print("""
-    Skellige: start rival Live Activities on a booted iPhone Simulator.
+    Skellige: install up to three dummy Live Activity apps on an iPhone Simulator
+    so you can test how your app's Live Activity shares the Dynamic Island.
 
-    npx skellige
-    npx skellige install --competitors 3 --device <udid>
-    npx skellige doctor
-    npx skellige start --competitors 3 --device <udid> --return-to <target-bundle-id>
-    npx skellige status --device <udid> --return-to <target-bundle-id>
-    npx skellige stop --device <udid> --return-to <target-bundle-id>
+    USAGE
+      npx -y skellige <command> [options]
 
-    Without a command, choose a running, stopped, or new Simulator and install 1, 2, or 3 helper apps.
-    Interactive menus use arrows or J/K and Enter. Esc goes back; Q or Ctrl+C cancels.
-    Esc cancels on the first screen. Piped input uses numbers.
-    Install boots or creates the selected Simulator using an installed iOS 17+ runtime.
-    Other commands need a booted Simulator and --device when multiple iPhones are booted.
-    Start, status, and stop briefly open Shortcuts, then launch --return-to.
+    COMMANDS
+      (none)    Interactive setup: pick a Simulator, then 1-3 helper apps. Needs a TTY.
+      install   Build and install helper apps. Does not start activities.
+      start     Start Live Activities in the first N helpers, stop the rest.
+      status    Print each helper's active Live Activity count.
+      stop      End every Skellige Live Activity. Your app's activity is untouched.
+      doctor    Print the Xcode version and booted iPhone Simulator UDIDs.
+      help      Show this text. Also --help or -h.
+
+    OPTIONS
+      --competitors <1|2|3>   Helper count. Required for start; install asks if omitted.
+      --device <udid>         Simulator UDID. install prompts without it; start, status,
+                              and stop infer it when exactly one iPhone is booted.
+      --return-to <bundle-id> App to reopen afterwards. Required for start, status, stop.
+                              Must be installed on the Simulator (your app, or
+                              com.apple.mobilesafari if you have none).
+
+    NON-INTERACTIVE FLOW (agents, CI)
+      npx -y skellige doctor
+      npx -y skellige install --competitors 3 --device <udid>
+      npx -y skellige start --competitors 3 --device <udid> --return-to <bundle-id>
+      npx -y skellige status --device <udid> --return-to <bundle-id>
+      npx -y skellige stop --device <udid> --return-to <bundle-id>
+
+    NOTES
+      install accepts a stopped Simulator and boots it. start, status, and stop need it booted.
+      List all Simulators with: xcrun simctl list devices available
+      start, status, and stop drive the Shortcuts app through an XCUITest runner, so no
+      clicks are needed. Each takes about a minute or more; the first start builds helpers.
+      Exit codes: 0 success, 1 error (message on stderr), 130 cancelled.
+      Interactive menus: arrows or J/K, Enter, Esc back, Q or Ctrl+C cancel.
+      Piped stdin gets numbered prompts; closed stdin fails with a hint to pass flags.
     """)
 }
 

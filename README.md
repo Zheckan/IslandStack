@@ -7,69 +7,42 @@
 
 # Skellige
 
-Skellige starts one, two, or three dummy Live Activities on a running iPhone Simulator. Use it while testing how your app's activity shares the Dynamic Island with activities from other apps. Each dummy activity belongs to a separate Skellige helper app.
-
-Skellige installs separate helper apps from its bundled sources. Each app is a full-page button: tap to activate its Live Activity, and tap again to stop. The CLI can also start and stop activities through Apple’s Shortcuts app, then return to the app you name.
-
-## Requirements
-
-- macOS with full Xcode and an installed iOS Simulator runtime. The tested setup was Xcode 27.0, Swift 6.4, and iOS 27.0.
-- An iPhone model with Dynamic Island support in an installed iOS 17-or-newer runtime. The installer can boot an existing Simulator or create one.
-- Your test app installed on that Simulator. Start its Live Activity in the app before running Skellige if you want the comparison case.
-
-Skellige builds unsigned Simulator apps locally. The source checkout needs Swift; the npm launcher also needs Node.js and npm. It does not need an Apple Developer account, APNs, Expo, or Metro. Physical devices and other Xcode/iOS versions have not been tested.
-
-## Run with npx
-
-After the npm package is published, run from any directory:
+**Test how your app's Live Activity competes for the Dynamic Island.** Skellige installs up to three dummy helper apps on an iPhone Simulator, and each one runs its own Live Activity. Start your app's activity, add 1–3 rivals, and watch what iOS shows.
 
 ```sh
 npx skellige
 ```
 
-Choose an iPhone Simulator and how many helper apps to install: **1, 2, or 3**. The helper apps are named after Skellige clans: **An Craite**, **Tordarroch**, and **Drummond**. The command installs the first one, two, or all three. It leaves existing helper apps and activities alone. Open the installed apps and tap their full-page **Activate Live Activity** buttons. Each identity keeps one activity; tap **Stop Live Activity** to end it.
+Pick a Simulator, pick 1, 2, or 3 helper apps, then open each helper and tap **Activate Live Activity**. Tap again to stop.
 
-The Simulator list uses this order:
+Needs macOS with full Xcode, an installed iOS 17+ Simulator runtime, Node.js 18+, and an iPhone model with a Dynamic Island. Nothing is signed and no Apple Developer account is needed. Tested on Xcode 27.0 with iOS 27.0 Simulators; other versions and physical devices are untested.
 
-1. **Running**: an existing device that is already booted.
-2. **Existing, stopped**: a device already created in Simulator; installation boots it.
-3. **New**: a model and iOS version supported by an installed runtime; installation creates and boots a separate device named `Skellige <model>`.
+## Run it from scripts and agents
 
-Every choice shows its iOS version. Picking a device does not create or boot it until you also confirm the helper count. New choices use runtimes already installed on your Mac. To add an iOS version, [install its runtime in Xcode](https://developer.apple.com/documentation/xcode/downloading-and-installing-additional-xcode-components).
-
-The full-screen setup shows a highlighted choice and a **What this does** explanation. Use **↑/↓** or **J/K** to move and **Enter** to confirm. **Esc** goes back from helper count to Simulator selection, or cancels on the first screen. **Q** or **Ctrl+C** cancels from either screen. Piped input and terminals with `TERM=dumb` use numbered choices instead.
-
-To install without prompts on a created Simulator, running or stopped:
+Every command also works with flags and no prompts. `npx skellige --help` prints the full reference.
 
 ```sh
-npx skellige install --competitors 3 --device <simulator-udid>
+npx -y skellige doctor                                   # booted iPhone UDIDs
+npx -y skellige install --competitors 3 --device <udid>  # install helpers only
+npx -y skellige start   --competitors 3 --device <udid> --return-to <bundle-id>
+npx -y skellige status  --device <udid> --return-to <bundle-id>
+npx -y skellige stop    --device <udid> --return-to <bundle-id>
 ```
 
-To activate the chosen count from the terminal and return to your own app:
+- `start` starts Live Activities in the first N helpers without anyone touching the Simulator. It runs Apple's Shortcuts app through an XCUITest runner, then reopens `--return-to`. Running it again does not add duplicates, and a lower N stops the extra helpers.
+- `stop` ends every Skellige activity and leaves your app's activity alone.
+- `--return-to` must be installed on that Simulator. Pass your app's bundle ID, or `com.apple.mobilesafari` if you don't have one.
+- `--device` can be omitted for `start`, `status`, and `stop` when exactly one iPhone is booted. `install` boots a stopped Simulator; the others need it booted. `xcrun simctl list devices available` lists every UDID.
+- `start`, `status`, and `stop` take about a minute or more each. The first run also builds the Swift CLI and the helpers.
+- Exit code 0 means success, 1 means an error (the message goes to stderr), and 130 means cancelled.
 
-```sh
-npx skellige start --competitors 3 --device <simulator-udid> --return-to <your-app-bundle-id>
-npx skellige status --device <simulator-udid> --return-to <your-app-bundle-id>
-npx skellige stop --device <simulator-udid> --return-to <your-app-bundle-id>
-```
+## Interactive setup
 
-The first invocation downloads the package and builds the Swift CLI. npm may reuse the package and build on later invocations. The helper apps remain installed on the Simulator until you remove them. `install` does not activate or stop activities; `start` sets the active helper count, and `stop` ends all Skellige activities.
+`npx skellige` without a command lists Simulators in this order: **running**, **existing but stopped** (setup boots it), and **new** (setup creates `Skellige <model>` from a runtime you already have). Each entry shows its iOS version. Nothing is created or booted until you also confirm the helper count. To add an iOS version, [install its runtime in Xcode](https://developer.apple.com/documentation/xcode/downloading-and-installing-additional-xcode-components).
 
-## Run from a source checkout
+Move with **↑/↓** or **J/K** and press **Enter** to choose. **Esc** goes back, **Q** or **Ctrl+C** cancels. Piped input and `TERM=dumb` get numbered prompts instead.
 
-From this repository:
-
-```sh
-swift run skellige install --competitors 3 --device <simulator-udid>
-swift run skellige doctor
-swift run skellige start --competitors 3 --device <simulator-udid> --return-to <your-app-bundle-id>
-swift run skellige status --device <simulator-udid> --return-to <your-app-bundle-id>
-swift run skellige stop --device <simulator-udid> --return-to <your-app-bundle-id>
-```
-
-Use `--competitors 1`, `2`, or `3` to choose the number of other apps. `start` sets Skellige’s activity count, so running it again does not add duplicates. Starting one after three ends Tordarroch and Drummond and keeps An Craite. `stop` ends all three helpers, including when they are already stopped, and leaves your app’s activity alone. The `start`, `status`, and `stop` commands briefly open Shortcuts and launch `--return-to` afterward.
-
-`doctor` prints booted iPhone Simulator UDIDs. For `start`, `status`, and `stop`, you can omit `--device` when exactly one eligible iPhone is booted. These commands require a running Simulator. `install` offers running, stopped, and new choices when `--device` is omitted. `--return-to` must be the bundle ID of an app already installed on that Simulator. The first start builds the required helpers and takes longer than later runs.
+The helper apps are **An Craite**, **Tordarroch**, and **Drummond**. Each keeps one activity. They stay installed until you remove them from the Simulator.
 
 ## What the counts mean
 
@@ -78,6 +51,8 @@ Use `--competitors 1`, `2`, or `3` to choose the number of other apps. `start` s
 The dummy widgets show a 20-minute countdown. That display deadline does not automatically end an activity while no command runs. Call `stop` when the test is over. A later command also prunes expired Skellige activities.
 
 ## Development
+
+From a source checkout, `swift run skellige <command>` takes the same arguments as `npx skellige`.
 
 ```sh
 swift test
@@ -94,7 +69,7 @@ These terminal tests require a booted eligible iPhone Simulator; the Simulator p
 
 The [execution plan](docs/execution-plan.md) records the stack, tested paths, and release work that remains. The host code is in `Sources/`, the three native helper builds are in `ios/Competitor.xcodeproj`, and the Shortcuts UI driver is in `ios/ShortcutDriver.xcodeproj`.
 
-The npm package contains these sources and a small Node launcher. To inspect what a release would ship, run `npm pack --dry-run`. Publishing to npm is a separate release step.
+The npm package contains these sources and a small Node launcher that runs `swift run`. To inspect what a release would ship, run `npm pack --dry-run`.
 
 ## Easter eggs
 
