@@ -16,7 +16,7 @@ For automation, use `install --competitors 3 --device <udid>` without prompts. E
 
 ## App icon
 
-The icon source is `ios/Competitor/AppIcon.icon`, an Icon Composer document shared by the three helper app builds. It shows a Dynamic Island split into a pill and a separate bubble, with the helpers' cyan, orange, and purple colors. It has light and dark backgrounds; Xcode generates the tinted and clear variants. The artwork contains no Apple logo or SF Symbols.
+The brand icon is `ios/Competitor/AppIcon.icon`, an Icon Composer document showing a Dynamic Island split into a pill and a separate bubble, with the helpers' cyan, orange, and purple colors. Each helper build uses its own copy, `AppIcon-A.icon`, `AppIcon-B.icon`, or `AppIcon-C.icon`, selected by `ASSETCATALOG_COMPILER_APPICON_NAME`. In each copy only that clan's element keeps its color: An Craite's cyan dot, Tordarroch's orange ring, or Drummond's purple bubble. The other two are gray `#5A5A5E`. It has light and dark backgrounds; Xcode generates the tinted and clear variants. The artwork contains no Apple logo or SF Symbols.
 
 `docs/logo/logo-light.png` and `docs/logo/logo-dark.png` are 256 px README renders. Regenerate them with Icon Composer's `ictool`:
 

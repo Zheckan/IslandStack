@@ -12,19 +12,22 @@ struct CompetitorApp: App {
       Button {
         Task { await toggleActivity() }
       } label: {
-        VStack(spacing: 24) {
+        VStack(spacing: 16) {
           Image(systemName: isActive ? "stop.circle.fill" : CompetitorStyle.symbol)
             .font(.system(size: 88, weight: .medium))
-          Text(isActive ? "Stop Live Activity" : "Activate Live Activity")
-            .font(.largeTitle.weight(.semibold))
-            .multilineTextAlignment(.center)
+            .foregroundStyle(CompetitorStyle.color)
+            .padding(.bottom, 8)
           Text(CompetitorStyle.name)
-            .font(.headline)
+            .font(.largeTitle.weight(.bold))
+          // Primary and secondary text keep contrast on the tint; cyan and orange text would not.
+          Text(isActive ? "Stop Live Activity" : "Activate Live Activity")
+            .font(.title3.weight(.semibold))
             .foregroundStyle(.secondary)
         }
-        .foregroundStyle(CompetitorStyle.color)
+        .multilineTextAlignment(.center)
         .padding(32)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(CompetitorStyle.color.opacity(0.15))
         .background(Color(uiColor: .systemBackground))
         .contentShape(Rectangle())
       }
