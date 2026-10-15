@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Start rival Live Activities on an iPhone Simulator",
   "license": "MIT",
-  "repository": "github:Zheckan/IslandStack",
+  "repository": "github:Zheckan/skellige",
   "os": ["darwin"],
   "engines": {
     "node": ">=18"
