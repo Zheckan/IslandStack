@@ -90,7 +90,7 @@ The iPhone 18 Pro target plus zero, one, and two competitor cases ran with final
 
 ### Stage 4: public release preparation
 
-A short [README](../README.md) now gives a copyable command sequence and measured limits. A proposed [MIT license](../LICENSE) is in the local tree. The current Git remote already names a public `Zheckan/IslandStack` repository; the [release checklist](release-readiness.md) records name checks and work still needed before publication. A clean-checkout test on another Mac or account remains open. Publishing, pushing, and package-registry release require separate authorization.
+A short [README](../README.md) now gives a copyable command sequence and measured limits. A proposed [MIT license](../LICENSE) is in the local tree. The current Git remote already names a public `Zheckan/skellige` repository; the [release checklist](release-readiness.md) records name checks and work still needed before publication. A clean-checkout test on another Mac or account remains open. Publishing, pushing, and package-registry release require separate authorization.
 
 ## Current environment and open decisions
 
@@ -98,5 +98,5 @@ A short [README](../README.md) now gives a copyable command sequence and measure
 - Local tools report Xcode 27.0, Swift 6.4, and iOS 27.0. A fresh iPhone 15 Pro trial succeeded with no saved shortcut. Shortcuts visibly opened; the CLI restored Safari. A direct supported `simctl` App Intent command was not found.
 - The iPhone 18 Pro trial established three active activities across Activity Lab 3, A, and B, but only two settled minimal positions were exposed. B's widget rendered after A stopped.
 - On iOS 27.0 with an active expanded Live Activity, a top-left Shortcuts Library tap opened that activity's app. The driver now navigates back with a lower-screen edge swipe; it completed subsequent cleanup. More runtime/device coverage is needed before public release.
-- Review the local MIT license and `Zheckan` copyright line before publishing. The Gymrat prototype has no tracked license to carry into this repository. The current public remote already uses `Zheckan/IslandStack`; `islandstack` remains the local CLI name.
+- Review the local MIT license and `Zheckan` copyright line before publishing. The Gymrat prototype has no tracked license to carry into this repository. The current public remote already uses `Zheckan/skellige`; `islandstack` remains the local CLI name.
 - Keep the initial tool Simulator-only. Physical-device signing, APNs starts, prebuilt downloads, custom activity designs, and automated screenshot comparison need separate requirements and verification.

@@ -2,13 +2,13 @@
 
 Snapshot: 28 September 2026. This is a local review checklist. No commit, push, or release was made in this work session.
 
-Update, 13 October 2026: the source is under review in [PR #1](https://github.com/Zheckan/IslandStack/pull/1) and stacked [PR #2](https://github.com/Zheckan/IslandStack/pull/2). The package now includes an interactive installer, three helper apps, activation buttons, and an original app icon; see [the current verification](npx-installer-findings.md). The npm package has not been published. Registry ownership, the final package name, and release authorization still need to be settled before `npx islandstack` can download it from npm. The September checklist below records the earlier state; checks on another Mac and additional runtime versions remain open.
+Update, 13 October 2026: the source is under review in [PR #1](https://github.com/Zheckan/skellige/pull/1) and stacked [PR #2](https://github.com/Zheckan/skellige/pull/2). The package now includes an interactive installer, three helper apps, activation buttons, and an original app icon; see [the current verification](npx-installer-findings.md). The npm package has not been published. Registry ownership, the final package name, and release authorization still need to be settled before `npx islandstack` can download it from npm. The September checklist below records the earlier state; checks on another Mac and additional runtime versions remain open.
 
 ## Prepared
 
 - The source checkout has a CLI, two native helper identities, a Shortcuts UI driver, tests, a [README](../README.md), and a proposed [MIT license](../LICENSE).
 - `swift test` passed five host tests. Simulator trials on iOS 27.0 exercised a clean first start, fresh status, repeat start, one-competitor transition, repeat stop, and isolation from Activity Lab 3.
-- The current `origin` points to [Zheckan/IslandStack](https://github.com/Zheckan/IslandStack). GitHub's repository API reported it as public, with `main` as the default branch and no license in the published repository at this snapshot. GitHub repository search found that exact name under this owner and one differently named `IslandStackControl` repository. A local `command -v islandstack` found no installed command, and Homebrew search found no formula or cask with that name. These checks do not reserve a command name elsewhere.
+- The current `origin` points to [Zheckan/skellige](https://github.com/Zheckan/skellige). GitHub's repository API reported it as public, with `main` as the default branch and no license in the published repository at this snapshot. GitHub repository search found that exact name under this owner and one differently named `IslandStackControl` repository. A local `command -v islandstack` found no installed command, and Homebrew search found no formula or cask with that name. These checks do not reserve a command name elsewhere.
 - Source and widget designs in this repository were written for IslandStack. The Gymrat Activity Lab was a test target and reference; no Gymrat source was copied into this repository.
 
 ## Before publishing this work
